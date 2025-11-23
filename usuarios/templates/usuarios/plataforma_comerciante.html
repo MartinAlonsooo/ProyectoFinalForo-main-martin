@@ -1,6 +1,7 @@
 {% load static %}
 {% load my_custom_filters %} 
-<DOCTYPE html>
+<!DOCTYPE html>
+<html class="light" lang="es">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -51,6 +52,19 @@
         .off-canvas-panel-notifications.active {
             transform: translateX(0); 
         }
+        /* Estilo para los logos de las fuentes */
+        .source-logo-container {
+            width: 40px; 
+            height: 40px;
+            min-width: 40px;
+            background-color: #f7f7f7;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display">
@@ -78,7 +92,7 @@
                     </label>
                 </div>
                 <div class="flex justify-end gap-4 items-center">
-                    {# Botón de Notificaciones (MODIFICADO) #}
+                    {# Botón de Notificaciones #}
                     <button onclick="toggleNotifications('notifications-panel');" 
                             class="relative flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
                         <span class="material-symbols-outlined text-2xl">notifications</span>
@@ -102,7 +116,6 @@
             </header>
             
             <main class="flex-1 w-full max-w-screen-2xl mx-auto p-6 lg:p-8">
-            {# ... (El contenido de la página se mantiene) ... #}
                 {% if messages %}
                     <div class="mb-6">
                     {% for message in messages %}
@@ -120,11 +133,11 @@
                             <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
                                 <h3 class="text-text-light dark:text-text-dark text-lg font-bold mb-4">Accesos Rápidos</h3>
                                 <div class="flex flex-col gap-2">
-                                    <a class="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 text-text-light dark:text-text-dark transition-colors duration-200" href="#">
+                                    <a class="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 text-text-light dark:text-text-dark transition-colors duration-200" href="{% url 'beneficios' %}">
                                         <span class="material-symbols-outlined text-primary text-2xl">star</span>
                                         <p class="font-medium">Beneficios</p>
                                     </a>
-                                    <a class="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 text-text-light dark:text-text-dark transition-colors duration-200" href="#">
+                                    <a class="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 text-text-light dark:text-text-dark transition-colors duration-200" href="{% url 'directorio' %}">
                                         <span class="material-symbols-outlined text-primary text-2xl">groups</span>
                                         <p class="font-medium">Proveedores</p>
                                     </a>
@@ -149,7 +162,7 @@
                         <div class="space-y-8">
                             <div class="bg-white dark:bg-white rounded-xl shadow-sm p-6">
                                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                                    <h1 class="text-text-light dark:text-text-dark text-2xl font-bold tracking-[-0.015em] shrink-0">Foro</h1>
+                                    <h1 class="text-text-light dark:text-text-dark text-2xl font-bold tracking-[-0.015em] shrink-0">Foro (Solo Administradores)</h1>
                                     
                                     <div class="flex flex-col sm:flex-row gap-4 items-center justify-end w-full sm:w-auto">
                                         
@@ -325,7 +338,7 @@
                                         </div>
                                     {% empty %}
                                         <div class="p-4 text-center text-text-muted-light dark:text-text-muted-dark">
-                                            Aún no hay publicaciones en esta categoría. ¡Sé el primero en crear una!
+                                            Aún no hay publicaciones en esta categoría.
                                         </div>
                                     {% endfor %}
                                 </div>
@@ -336,24 +349,41 @@
                     <aside class="col-span-12 lg:col-span-3 order-3">
                         <div class="space-y-8">
                             <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
-                                <h3 class="text-text-light dark:text-text-dark text-lg font-bold mb-4">Últimas Noticias</h3>
+                                <h3 class="text-text-light dark:text-text-dark text-lg font-bold mb-4">Noticias del Rubro</h3>
                                 <div class="space-y-4">
-                                    <div class="flex gap-4 items-center">
-                                        <img class="w-20 h-20 object-cover rounded-lg" data-alt="People in a meeting room" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDw4lC1vSvwceI-qO4vPrManCM4dXbqa79FpaZGZRXJVq3cs4Bm294sTJndABNYnOHpWfm-3QczNaSIYsJMM-M3Ff3teeR5pJR1sOjLSe5f5avdSCCT8z1iIJlf5qhYI7AsJqFbzG1hqj5N5TLX-BV20NBaDUgMSsTIrWIvjVlKe1FFJlnvB-9TVSCGFhfVIdQ3naPfljcnsOR0w13jsFF395orHcaRhHSthWU9M5h6LR1q4BZJgmBfi0hGbpddmYeOW1TAyCU7GQ"/>
+                                    {# Bucle de noticias externas: Muestra solo las primeras 4 #}
+                                    {% for news in external_news %}
+                                    <div class="flex gap-4 items-start">
+                                        {# Contenedor de logo que usa la URL de la imagen si existe #}
+                                        <div class="source-logo-container shrink-0" 
+                                             {% if news.image_url %} style='background-image: url("{{ news.image_url }}"); background-size: contain; background-repeat: no-repeat; background-position: center;' {% endif %}
+                                        >
+                                            {% if not news.image_url %}
+                                            <span class="material-symbols-outlined text-3xl text-primary/70">newspaper</span>
+                                            {% endif %}
+                                        </div>
                                         <div>
-                                            <p class="text-text-light dark:text-text-dark font-semibold text-sm leading-tight">Ayuntamiento lanza nuevas ayudas para el comercio local</p>
-                                            <a class="text-primary text-xs font-bold mt-1 inline-block" href="#">Leer más</a>
+                                            <p class="text-text-light dark:text-text-dark font-semibold text-sm leading-tight">{{ news.title }}</p>
+                                            <a class="text-primary text-xs font-bold mt-1 inline-block hover:underline" href="{{ news.url }}" target="_blank">
+                                                Leer más ({{ news.source }})
+                                            </a>
                                         </div>
                                     </div>
-                                    <div class="flex gap-4 items-center">
-                                        <img class="w-20 h-20 object-cover rounded-lg" data-alt="Person paying with a phone" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSSAxeP4eS2YJLWORYxKZ2D94v4mIbwiqjqgP1xX19yT6dmL2jb-Axv4MosM37ZE99DSfZveQgpm-itm8NYhOXWaxqVrcoxL20U25I-Ll2QVtBmj8U1G_3f1u5HlblZ-FWOO75589irXaVHkF-GXtpEvfg13Hhu3V3vic0_VWgonvuYaPygNJ9boA20hRWkHx7zZQQS8brKPopoAzPB-lbW9ipOv1RcHx_03Yfsa6QFFSl--Br8nVu-r6On8FwpIhFaBbsUikmvw"/>
-                                        <div>
-                                            <p class="text-text-light dark:text-text-dark font-semibold text-sm leading-tight">Tendencias de consumo para el próximo trimestre</p>
-                                            <a class="text-primary text-xs font-bold mt-1 inline-block" href="#">Leer más</a>
-                                        </div>
-                                    </div>
+                                    {% empty %}
+                                        <p class="text-sm text-text-muted-light">No hay noticias recientes disponibles.</p>
+                                    {% endfor %}
                                 </div>
+                                
+                                {# Botón "Ver Más" #}
+                                {% if external_news|length >= 4 %}
+                                <div class="mt-6 border-t pt-4">
+                                    <a href="{% url 'noticias' %}" class="w-full inline-block text-center px-4 py-2 bg-gray-100 text-primary text-sm font-bold rounded-lg hover:bg-gray-200 transition-colors">
+                                        Ver más noticias
+                                    </a>
+                                </div>
+                                {% endif %}
                             </div>
+                            
                             <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
                                 <h3 class="text-text-light dark:text-text-dark text-lg font-bold mb-4">Próximos Eventos</h3>
                                 <div class="space-y-4">
@@ -388,7 +418,7 @@
         </div>
     </div>
     
-    {# Botón y panel de publicación (se mantiene) #}
+    {# Botón flotante para móvil (Solo Admin) #}
     {% if is_admin %}
     <div class="fixed bottom-0 left-0 w-full p-4 lg:hidden z-40 bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-gray-700 shadow-lg">
         <button onclick="document.getElementById('off-canvas-publicar').classList.add('active');" 
@@ -399,7 +429,7 @@
     </div>
     {% endif %}
 
-    {# Modal de Publicación (se mantiene) #}
+    {# Modal de Publicación (Solo Admin) #}
     {% if is_admin %}
     <div id="off-canvas-publicar" class="off-canvas-panel-post fixed top-0 right-0 w-full sm:w-1/2 lg:w-1/3 h-full bg-white dark:bg-white z-50 shadow-2xl overflow-y-auto p-6 flex flex-col">
         <div class="flex justify-between items-center pb-4 mb-4 border-b border-gray-200 dark:border-gray-700">
@@ -411,7 +441,6 @@
         </div>
 
         <form method="POST" action="{% url 'crear_publicacion' %}" enctype="multipart/form-data" class="space-y-4 flex-grow flex flex-col">
-        {# ... (Contenido del formulario de publicación se mantiene) ... #}
             {% csrf_token %}
             
             <div>
@@ -477,7 +506,7 @@
     </div>
     {% endif %}
 
-    {# Panel Deslizable de Notificaciones (NUEVO) #}
+    {# Panel Deslizable de Notificaciones #}
     <div id="notifications-panel" class="off-canvas-panel-notifications fixed top-0 right-0 w-full sm:w-96 h-full bg-white dark:bg-background-dark z-50 shadow-2xl overflow-y-auto flex flex-col">
         <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-xl font-bold text-text-light dark:text-text-dark">Notificaciones ({{ notificaciones|length }})</h3>
@@ -515,19 +544,6 @@
         </div>
     </div>
     
-<script>
-    // Se mantiene la función toggleFilter
-
-    // FUNCIÓN NUEVA: Para mostrar/ocultar el panel de notificaciones
-    function toggleNotifications(panelId) {
-        const panel = document.getElementById(panelId);
-        if (panel) {
-            panel.classList.toggle('active');
-        }
-    }
-
-    // Se mantienen las funciones toggleComments y toggleHiddenComments
-</script>
 <script>
     function toggleFilter(contentId, iconId) {
         const content = document.getElementById(contentId);
@@ -581,6 +597,14 @@
             }
             
             showMoreBtn.textContent = 'Ver más comentarios';
+        }
+    }
+    
+    // FUNCIÓN NUEVA: Para mostrar/ocultar el panel de notificaciones
+    function toggleNotifications(panelId) {
+        const panel = document.getElementById(panelId);
+        if (panel) {
+            panel.classList.toggle('active');
         }
     }
 </script>

@@ -1,4 +1,4 @@
-# usuarios/urls.py (CONTENIDO COMPLETO MODIFICADO)
+# usuarios/urls.py (CÓDIGO COMPLETO MODIFICADO)
 
 from django.urls import path
 from . import views
@@ -20,6 +20,9 @@ urlpatterns = [
     # DIRECTORIO DE PROVEEDORES
     path('directorio/', views.directorio_view, name='directorio'),
     path('directorio/<int:pk>/', views.proveedor_perfil_view, name='proveedor_perfil'),
+    
+    # NOTICIAS (NUEVO)
+    path('noticias/', views.noticias_view, name='noticias'),
     
     # GESTIÓN DE ROLES (NUEVAS RUTAS AÑADIDAS)
     path('proveedor/solicitar/', views.solicitar_rol_proveedor_view, name='solicitar_proveedor'),

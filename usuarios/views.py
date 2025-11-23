@@ -7,8 +7,10 @@ from django.core.files.storage import default_storage
 from django.utils import timezone
 from django.db.models import Count, Q 
 from django.db import IntegrityError 
-from datetime import timedelta, date # <-- Se añade 'date' para la lógica de notificaciones
+from datetime import timedelta, date 
 from django.contrib.auth.decorators import login_required 
+from django.templatetags.static import static # Importar para usar static() en el backend
+
 
 # Importamos todos los modelos y opciones
 from .models import (
@@ -30,90 +32,110 @@ from .forms import (
 
 # --- SIMULACIÓN DE ESTADO DE SESIÓN GLOBAL ---
 current_logged_in_user = None 
-
-# Definición de Roles Display (usando ROLES_CHOICES del modelo)
 ROLES_DISPLAY = dict(ROLES_CHOICES)
 
-# --- FUNCIÓN HELPER: Genera Notificaciones Simuladas (NUEVO) ---
+# --- DATOS DE NOTICIAS EXTERNAS (DATASET COMPLETO Y REALISTA) ---
+ALL_EXTERNAL_NEWS = [
+    {
+        'title': "El desafío del comercio local en Chile",
+        'snippet': "Una ciudad con comercio local vivo es una ciudad más segura, más diversa y con mejor convivencia.",
+        'url': "https://www.nuevopoder.cl/basta-con-guardias-el-desafio-del-comercio-local-en-chile/",
+        'source': "La Tercera",
+        'theme': "Economía y Ciudad",
+        'image_url': static('img/logos/latercera.png')
+    },
+    {
+        'title': "Día de la Madre: 5 tips para que las pymes no colapsen",
+        'snippet': "Según cifras de 2023 de la Cámara de Comercio de Santiago, las ventas llegan a su peak el día sábado.",
+        'url': "https://comerciante.lacuarta.com/categoria/noticias",
+        'source': "Revista Comerciante",
+        'theme': "Marketing y Ventas",
+        'image_url': static('img/logos/comerciante.png')
+    },
+    {
+        'title': "Fondo Mujeres Por la Equidad 2024 abre sus postulaciones",
+        'snippet': "Organizaciones de todo Chile podrán postular proyectos cuyas temáticas aborden el acceso de mujeres a la tecnología.",
+        'url': "https://comerciante.lacuarta.com/categoria/noticias",
+        'source': "Revista Comerciante",
+        'theme': "Ayudas y Subsidios",
+        'image_url': static('img/logos/comerciante.png')
+    },
+    {
+        'title': "Utilidades de Ripley caen 40% en el tercer trimestre",
+        'snippet': "Análisis de Barclays y Morgan Stanley sobre la caída de utilidades de las grandes tiendas en el sector retail.",
+        'url': "https://www.emol.com/movil/economia/index.aspx",
+        'source': "Emol",
+        'theme': "Retail y Tendencias",
+        'image_url': static('img/logos/emol.png')
+    },
+    {
+        'title': "El descontrolado comercio ambulante en Santiago",
+        'snippet': "Tras este desorden los asaltos y robos tienen a los locatarios entre la espada y la pared.",
+        'url': "https://www.youtube.com/watch?v=80a7qy5SkjA",
+        'source': "Canal 13",
+        'theme': "Seguridad",
+        'image_url': static('img/logos/canal13.png')
+    },
+    {
+        'title': "Dólar se dispara $14 y anota su mayor salto diario",
+        'snippet': "El billete verde cerró la semana por sobre los $940, impactando la importación de productos.",
+        'url': "https://www.emol.com/movil/economia/index.aspx",
+        'source': "Emol",
+        'theme': "Economía y Finanzas",
+        'image_url': static('img/logos/emol.png')
+    },
+    {
+        'title': "Comerciantes en alerta por alza de patentes en La Estrella",
+        'snippet': "Vecinos y dueños de minimarket critican el nuevo plan regulador municipal que eleva costos de permisos.",
+        'url': "#",
+        'source': "La Estrella",
+        'theme': "Normativa y Ciudad",
+        'image_url': static('img/logos/laestrella.png')
+    },
+    {
+        'title': "TVN reporta baja en ventas de pequeños locales",
+        'snippet': "Reportaje especial sobre los hábitos de consumo post-pandemia y el impacto en las ventas del comercio minorista.",
+        'url': "#",
+        'source': "TVN",
+        'theme': "Retail y Tendencias",
+        'image_url': static('img/logos/tvn.png')
+    },
+]
+
+# Recopilar fuentes y temas únicos para los filtros del front-end
+UNIQUE_SOURCES = sorted(list(set(news['source'] for news in ALL_EXTERNAL_NEWS)))
+UNIQUE_THEMES = sorted(list(set(news['theme'] for news in ALL_EXTERNAL_NEWS)))
+
+
+# --- FUNCIÓN HELPER: Genera Notificaciones Simuladas (se mantiene) ---
 def generar_notificaciones_simuladas(comerciante):
     notificaciones = []
     hoy = timezone.now().date()
     puntos_actuales = comerciante.puntos
     
     # 1. Notificaciones de Beneficios
-    
-    # Nuevos descuentos o promociones disponibles (últimos 7 días)
     nuevos_beneficios = Beneficio.objects.filter(fecha_creacion__date__gte=hoy - timedelta(days=7)).order_by('-fecha_creacion')
     if nuevos_beneficios.exists():
-        notificaciones.append({
-            'tipo': '🔔 Beneficio',
-            'mensaje': f'¡Hay {nuevos_beneficios.count()} nuevos descuentos y promociones disponibles!',
-            'url': '/beneficios/',
-            'tiempo': 'Hace poco',
-            'color': 'text-secondary',
-        })
-
-    # Beneficio cerca de vencer (próximos 7 días)
-    beneficios_vencer = Beneficio.objects.filter(
-        vence__isnull=False, 
-        vence__range=[hoy, hoy + timedelta(days=7)]
-    ).order_by('vence')
+        notificaciones.append({'tipo': '🔔 Beneficio', 'mensaje': f'¡Hay {nuevos_beneficios.count()} nuevos descuentos y promociones disponibles!', 'url': '/beneficios/', 'tiempo': 'Hace poco', 'color': 'text-secondary',})
+    beneficios_vencer = Beneficio.objects.filter(vence__isnull=False, vence__range=[hoy, hoy + timedelta(days=7)]).order_by('vence')
     if beneficios_vencer.exists():
-        notificaciones.append({
-            'tipo': '🔔 Beneficio',
-            'mensaje': f'{beneficios_vencer.count()} beneficios están por vencer. ¡No los pierdas!',
-            'url': '/beneficios/',
-            'tiempo': '¡Urgente!',
-            'color': 'text-red-500',
-        })
-        
-    # Puntos acumulados o canjeables (simulado si tiene 100+ puntos)
+        notificaciones.append({'tipo': '🔔 Beneficio', 'mensaje': f'{beneficios_vencer.count()} beneficios están por vencer. ¡No los pierdas!', 'url': '/beneficios/', 'tiempo': '¡Urgente!', 'color': 'text-red-500',})
     if puntos_actuales >= 100:
-        notificaciones.append({
-            'tipo': '🔔 Puntos',
-            'mensaje': f'Acumulaste {puntos_actuales} puntos. ¡Ya puedes canjear!',
-            'url': '/beneficios/',
-            'tiempo': 'Ahora',
-            'color': 'text-green-500',
-        })
-        
+        notificaciones.append({'tipo': '🔔 Puntos', 'mensaje': f'Acumulaste {puntos_actuales} puntos. ¡Ya puedes canjear!', 'url': '/beneficios/', 'tiempo': 'Ahora', 'color': 'text-green-500',})
+    
     # 2. Invitaciones
-    
-    # Invitación a evento, capacitación, taller (Simulación)
     fecha_evento_simulado = hoy + timedelta(days=2)
-    notificaciones.append({
-        'tipo': '📨 Invitación',
-        'mensaje': f'Recordatorio: Taller de Marketing para Almacenes este {fecha_evento_simulado.strftime("%d/%m")}.',
-        'url': '#',
-        'tiempo': 'Hace 1 día',
-        'color': 'text-primary',
-    })
+    notificaciones.append({'tipo': '📨 Invitación', 'mensaje': f'Recordatorio: Taller de Marketing para Almacenes este {fecha_evento_simulado.strftime("%d/%m")}.', 'url': '#', 'tiempo': 'Hace 1 día', 'color': 'text-primary',})
     
-    # 4. Redes Sociales integradas (Simulación)
+    # 4. Redes Sociales integradas
+    notificaciones.append({'tipo': '📱 Contenido', 'mensaje': '¡Nuevo video! 5 Claves para Optimizar tu Inventario de Minimarket.', 'url': 'https://www.youtube.com/user/ClubAlmacen', 'tiempo': 'Hace 3 horas', 'color': 'text-red-600',})
     
-    # Nuevo video en YouTube del Club
-    notificaciones.append({
-        'tipo': '📱 Contenido',
-        'mensaje': '¡Nuevo video! 5 Claves para Optimizar tu Inventario de Minimarket.',
-        'url': 'https://www.youtube.com/user/ClubAlmacen',
-        'tiempo': 'Hace 3 horas',
-        'color': 'text-red-600',
-    })
-    
-    # 6. Reuniones (Simulación)
-    
-    # Invitación a reunión
-    notificaciones.append({
-        'tipo': '💬 Reunión',
-        'mensaje': 'Invitación a Reunión de Socios de Santiago Centro (Google Meet).',
-        'url': '#',
-        'tiempo': 'Hoy',
-        'color': 'text-purple-600',
-    })
+    # 6. Reuniones
+    notificaciones.append({'tipo': '💬 Reunión', 'mensaje': 'Invitación a Reunión de Socios de Santiago Centro (Google Meet).', 'url': '#', 'tiempo': 'Hoy', 'color': 'text-purple-600',})
 
     return notificaciones 
 
-# --- FUNCIÓN DE CÁLCULO DE NIVEL ---
+# --- FUNCIÓN DE CÁLCULO DE NIVEL (se mantiene) ---
 def calcular_nivel_y_progreso(puntos):
     NIVELES_VALORES = [nivel[0] for nivel in NIVELES] 
     UMBRAL_PUNTOS = 100 
@@ -146,7 +168,7 @@ def calcular_nivel_y_progreso(puntos):
         'proximo_nivel': proximo_nivel_display,
     }
 
-# --- Helper Function for Online Status ---
+# --- Helper Function for Online Status (se mantiene) ---
 def is_online(last_login):
     """Determina si un usuario/proveedor está en línea (última conexión en los últimos 5 minutos)."""
     if not last_login:
@@ -154,7 +176,7 @@ def is_online(last_login):
     return (timezone.now() - last_login) < timedelta(minutes=5)
 
 
-# --- VISTAS DE AUTENTICACIÓN Y PERFIL ---
+# --- VISTAS DE AUTENTICACIÓN Y PERFIL (se mantienen) ---
 
 def index(request):
     return redirect('registro') 
@@ -357,7 +379,7 @@ def perfil_view(request):
     return render(request, 'usuarios/perfil.html', context)
 
 
-# --- VISTA PRINCIPAL DE LA PLATAFORMA (Foro) ---
+# --- VISTA PRINCIPAL DE LA PLATAFORMA (Foro y Noticias) ---
 
 def plataforma_comerciante_view(request):
     global current_logged_in_user
@@ -366,6 +388,7 @@ def plataforma_comerciante_view(request):
         messages.warning(request, 'Por favor, inicia sesión para acceder a la plataforma.')
         return redirect('login') 
         
+    # Restricción: Solo posts de Admin (se mantiene)
     posts_query = Post.objects.select_related('comerciante').filter(
         comerciante__rol='ADMIN'
     ).annotate(
@@ -388,6 +411,10 @@ def plataforma_comerciante_view(request):
             
     # Generar notificaciones
     notificaciones = generar_notificaciones_simuladas(current_logged_in_user)
+    
+    # --- SIMULACIÓN DE NOTICIAS EXTERNAS (FUNCIONALIDAD 12.3) ---
+    # Mostramos las primeras 4 noticias para el sidebar.
+    external_news_sidebar = ALL_EXTERNAL_NEWS[:4]
         
     context = {
         'comerciante': current_logged_in_user,
@@ -401,14 +428,47 @@ def plataforma_comerciante_view(request):
         'is_admin': current_logged_in_user.rol == 'ADMIN',
         
         'notificaciones': notificaciones, 
+        'external_news': external_news_sidebar, # <-- PASAMOS LAS PRIMERAS 4
     }
     
     return render(request, 'usuarios/plataforma_comerciante.html', context)
 
 
+# --- NUEVA VISTA PARA LA CUADRÍCULA DE NOTICIAS CON FILTROS (NUEVO) ---
+def noticias_view(request):
+    
+    # 1. Obtener filtros
+    source_filter = request.GET.get('fuente', 'TODOS')
+    theme_filter = request.GET.get('tematica', 'TODOS')
+    
+    # 2. Aplicar filtros
+    filtered_news = ALL_EXTERNAL_NEWS
+    
+    if source_filter != 'TODOS':
+        filtered_news = [news for news in filtered_news if news['source'] == source_filter]
+        
+    if theme_filter != 'TODOS':
+        filtered_news = [news for news in filtered_news if news['theme'] == theme_filter]
+
+    context = {
+        'noticias': filtered_news,
+        'fuentes': UNIQUE_SOURCES,
+        'tematicas': UNIQUE_THEMES,
+        'source_seleccionada': source_filter,
+        'theme_seleccionada': theme_filter,
+        'comerciante': current_logged_in_user,
+        # Necesario para el header
+        'current_user_name': current_logged_in_user.nombre_apellido if current_logged_in_user else 'Usuario', 
+        'current_user_img': current_logged_in_user.get_profile_picture_url() if current_logged_in_user else '',
+    }
+    
+    return render(request, 'usuarios/noticias.html', context)
+
+
 def publicar_post_view(request):
     global current_logged_in_user
     
+    # Restricción: Solo Admins pueden publicar
     if not current_logged_in_user or current_logged_in_user.rol != 'ADMIN': 
         messages.error(request, 'No tienes permiso para crear publicaciones en el foro.')
         return redirect('plataforma_comerciante') 
@@ -518,8 +578,6 @@ def like_post_view(request, post_id):
     return redirect('plataforma_comerciante')
 
 
-# --- VISTA DE BENEFICIOS ---
-
 def beneficios_view(request):
     global current_logged_in_user
 
@@ -568,8 +626,6 @@ def beneficios_view(request):
     return render(request, 'usuarios/beneficios.html', context)
 
 
-# --- GESTIÓN DE ROLES (NUEVO) ---
-
 def solicitar_rol_proveedor_view(request):
     global current_logged_in_user
 
@@ -612,7 +668,6 @@ def proveedor_dashboard_view(request):
     return render(request, 'usuarios/proveedor_dashboard.html', context)
 
 
-# --- VISTAS DEL DIRECTORIO (NUEVO) ---
 def directorio_view(request):
     
     # --- 1. SIMULACIÓN DE DATOS DE PROVEEDORES (Para asegurar que hay datos para mostrar) ---
@@ -670,6 +725,7 @@ def directorio_view(request):
 
 
 def proveedor_perfil_view(request, pk):
+    global current_logged_in_user
     proveedor = get_object_or_404(Proveedor, pk=pk)
     
     is_online_status = is_online(proveedor.ultima_conexion)
