@@ -1,0 +1,266 @@
+{% load static %}
+{% load my_custom_filters %} 
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Mi Perfil - Plataforma de Comerciantes</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#005A9C",
+                "secondary": "#FF9800",
+                "background-light": "#F4F6F8",
+                "background-dark": "#101c22",
+                "text-light": "#333333",
+                "text-dark": "#F4F6F8",
+                "text-muted-light": "#666666",
+                "text-muted-dark": "#a0aec0",
+              },
+              fontFamily: {
+                "display": ["Work Sans", "sans-serif"],
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+    <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+        <div class="layout-container flex h-full grow flex-col">
+            <header class="flex items-center justify-between whitespace-nowrap bg-white dark:bg-background-dark border-b border-solid border-gray-200 dark:border-gray-700 px-10 py-3 shadow-sm sticky top-0 z-50">
+                <div class="flex items-center gap-8">
+                    <div class="flex items-center gap-3">
+                        <img src="{% static 'img/logoClubAlmacen.png' %}" alt="Logo de la Plataforma" class="h-24 w-auto"/>
+                    </div>
+                    <nav class="hidden md:flex gap-6 text-text-muted-light dark:text-text-muted-dark font-semibold text-sm">
+                        <a href="{% url 'plataforma_comerciante' %}" class="hover:text-primary transition-colors">Plataforma</a>
+                        <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> 
+                        <a href="{% url 'beneficios' %}" class="hover:text-primary transition-colors">Beneficios</a>
+                        <a href="{% url 'perfil' %}" class="text-primary transition-colors">Perfil</a>
+                    </nav>
+                </div>
+                <div class="flex justify-end gap-4 items-center">
+                    <button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <span class="material-symbols-outlined text-2xl">notifications</span>
+                    </button>
+                    <div class="flex items-center gap-2 p-1 rounded-lg bg-gray-100 dark:bg-gray-700">
+                        <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" 
+                             data-alt="Foto de {{ comerciante.nombre_apellido }}" 
+                             style='background-image: url("{{ comerciante.get_profile_picture_url }}");'>
+                        </div>
+                        
+                        <div class="flex flex-col text-left hidden sm:block pr-2">
+                            <p class="text-text-light dark:text-text-dark text-sm font-semibold leading-none">{{ comerciante.nombre_apellido|truncatewords:2 }}</p>
+                            <p class="text-text-muted-light dark:text-text-muted-dark text-xs leading-none mt-1">{{ rol_usuario }}</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <main class="flex-1 w-full max-w-screen-xl mx-auto p-6 lg:p-8">
+                <h1 class="text-3xl font-bold text-text-light dark:text-text-dark mb-6">Mi Perfil</h1>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="p-4 mb-4 text-sm rounded-lg {% if 'success' in message.tags %} bg-green-100 text-green-700 {% elif 'error' in message.tags %} bg-red-100 text-red-700 {% else %} bg-blue-100 text-blue-700 {% endif %}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    <div class="lg:col-span-1 space-y-8">
+                        <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
+                            <div class="flex flex-col items-center mb-6">
+                                <div class="relative">
+                                    <div id="profile-picture-display" class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-24" 
+                                         style='background-image: url("{{ comerciante.get_profile_picture_url }}");'>
+                                    </div>
+                                    <button onclick="openModal('editPhotoModal')"
+                                            class="absolute bottom-0 right-0 p-1 bg-primary text-white rounded-full border-2 border-white dark:border-background-dark hover:bg-primary/90">
+                                        <span class="material-symbols-outlined text-base">edit</span>
+                                    </button>
+                                </div>
+                                <h2 class="text-xl font-bold text-text-light dark:text-text-dark mt-4">{{ comerciante.nombre_apellido }}</h2>
+                                <p class="text-text-muted-light dark:text-text-muted-dark text-sm mt-1">
+                                    {{ comerciante.get_relacion_negocio_display }} de {{ comerciante.get_tipo_negocio_display }} '{{ nombre_negocio_display }}'
+                                </p>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="border-t pt-4">
+                                    <h3 class="text-lg font-bold text-text-light dark:text-text-dark mb-4">Puntos y Nivel</h3>
+                                    
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-sm font-medium text-text-muted-light">Puntos Acumulados:</p>
+                                        <p class="text-base font-bold text-secondary">{{ puntos_actuales }}</p>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm font-medium text-text-muted-light">Nivel Actual:</p>
+                                        <p class="text-base font-bold text-primary">{{ nivel_actual }}</p>
+                                    </div>
+
+                                    {% if nivel_actual != 'Diamante' %}
+                                    <div class="mt-3 text-xs text-text-muted-light">
+                                        Faltan {{ puntos_restantes }} puntos para subir al nivel {{ progreso_porcentaje|add:0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="border-t pt-4">
+                                    <h3 class="text-lg font-bold text-text-light dark:text-text-dark mb-4">Gestión de Roles</h3>
+                                    
+                                    {% if comerciante.es_proveedor %}
+                                        <p class="text-sm font-semibold text-green-600 mb-3">Rol de Proveedor: ¡ACTIVO!</p>
+                                        <a href="{% url 'proveedor_dashboard' %}" 
+                                           class="w-full inline-flex items-center justify-center p-2 bg-secondary text-white text-sm font-bold rounded-lg hover:bg-secondary/90 transition-colors">
+                                            Ir al Dashboard de Proveedor
+                                        </a>
+                                    {% else %}
+                                        <p class="text-sm text-text-muted-light mb-3">¿Deseas ofrecer tus insumos o servicios a otros comerciantes?</p>
+                                        <form method="POST" action="{% url 'solicitar_proveedor' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="w-full p-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
+                                                Solicitar Rol de Proveedor
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                                <div class="border-t pt-4">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="text-lg font-bold text-text-light dark:text-text-dark">Datos Personales</h3>
+                                        <button onclick="openModal('editContactModal')"
+                                                class="flex items-center gap-1 text-primary text-sm font-semibold hover:underline">
+                                            <span class="material-symbols-outlined text-base">edit</span>
+                                            Editar
+                                        </button>
+                                    </div>
+                                    <p class="text-sm font-medium text-text-muted-light">Correo:</p>
+                                    <p class="text-base text-text-light dark:text-text-dark mb-2 break-all">{{ comerciante.email }}</p>
+                                    <p class="text-sm font-medium text-text-muted-light">WhatsApp:</p>
+                                    <p class="text-base text-text-light dark:text-text-dark">{{ comerciante.whatsapp|default:"No registrado" }}</p>
+                                </div>
+
+                                <div class="border-t pt-4">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="text-lg font-bold text-text-light dark:text-text-dark">Datos del Negocio</h3>
+                                        <button onclick="openModal('editBusinessModal')"
+                                                class="flex items-center gap-1 text-primary text-sm font-semibold hover:underline">
+                                            <span class="material-symbols-outlined text-base">edit</span>
+                                            Editar
+                                        </button>
+                                    </div>
+                                    <p class="text-sm font-medium text-text-muted-light">Nombre del Negocio:</p>
+                                    <p class="text-base text-text-light dark:text-text-dark mb-2">{{ nombre_negocio_display }}</p>
+                                    <p class="text-sm font-medium text-text-muted-light">Relación:</p>
+                                    <p class="text-base text-text-light dark:text-text-dark mb-2">{{ comerciante.get_relacion_negocio_display }}</p>
+                                    <p class="text-sm font-medium text-text-muted-light">Tipo:</p>
+                                    <p class="text-base text-text-light dark:text-text-dark mb-2">{{ comerciante.get_tipo_negocio_display }}</p>
+                                    <p class="text-sm font-medium text-text-muted-light">Comuna:</p>
+                                    <p class="text-base text-text-light dark:text-text-dark">{{ comerciante.comuna }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="lg:col-span-2 space-y-8">
+                        
+                        <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-bold text-text-light dark:text-text-dark">Mis Intereses</h3>
+                                <button onclick="openModal('editInterestsModal')"
+                                        class="flex items-center gap-1 text-primary text-sm font-semibold hover:underline">
+                                    <span class="material-symbols-outlined text-base">edit</span>
+                                    Editar Intereses
+                                </button>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                {% for codigo_interes in intereses_actuales_codigos %}
+                                    {% if codigo_interes %} 
+                                        <span class="px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full">
+                                            {{ intereses_choices_dict|get_item:codigo_interes }}
+                                        </span>
+                                    {% endif %}
+                                {% empty %}
+                                    <p class="text-text-muted-light text-sm">Aún no has seleccionado tus intereses.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
+                            <h3 class="text-lg font-bold text-text-light dark:text-text-dark mb-4">Configuración</h3>
+                            <div class="space-y-4">
+                                <div class="border-t pt-4">
+                                    <h3 class="text-lg font-bold text-text-light dark:text-text-dark mb-4">Cuenta</h3>
+                                    <button onclick="confirmLogout()" 
+                                            class="flex items-center gap-2 text-red-600 bg-red-50/50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 p-3 rounded-lg w-full transition-colors font-semibold justify-center">
+                                        <span class="material-symbols-outlined text-xl">logout</span>
+                                        Cerrar Sesión
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <div id="editPhotoModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">...</div>
+    <div id="editContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">...</div>
+    <div id="editBusinessModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">...</div>
+    <div id="editInterestsModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">...</div>
+
+
+    <script>
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+        
+        // Cierra modales al presionar ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                document.querySelectorAll('.fixed.inset-0').forEach(modal => {
+                    modal.classList.add('hidden');
+                });
+            }
+        });
+
+        // Simulación de precarga de foto para modal (opcional)
+        document.getElementById('id_foto_perfil').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileNameDisplay').textContent = file.name;
+            } else {
+                document.getElementById('fileNameDisplay').textContent = 'Haz clic para subir una foto';
+            }
+        });
+        
+        // FUNCIÓN: Confirma el cierre de sesión antes de redirigir
+        function confirmLogout() {
+            // Muestra la ventana de confirmación nativa
+            if (window.confirm("¿Estás seguro de que quieres cerrar la sesión?")) {
+                // Si el usuario confirma, redirige al URL de logout de Django
+                window.location.href = "{% url 'logout' %}";
+            }
+        }
+    </script>
+</body>
+</html>
