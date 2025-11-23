@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'usuarios',
+    'proveedor',
 ]
 
 MIDDLEWARE = [
@@ -134,4 +135,4 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Ruta de la imagen de perfil por defecto (debe existir en usuarios/static/img/)
 DEFAULT_PROFILE_IMAGE = 'usuarios/img/default_profile.png'
 
-#HOLA BORRRAME
+LOGIN_URL = '/login/'

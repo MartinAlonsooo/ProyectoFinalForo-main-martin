@@ -1,4 +1,4 @@
-# usuarios/models.py (CONTENIDO COMPLETO MODIFICADO)
+# usuarios/models.py (CÓDIGO COMPLETO CORREGIDO)
 
 from django.db import models
 from django.core.validators import RegexValidator
@@ -27,7 +27,7 @@ TIPO_NEGOCIO_CHOICES = [
     ('FOODTRUCK', 'Food Truck/Carro de Comida'),
 ]
 
-# Opciones de Intereses (Mínimo 15 para la selección)
+# Opciones de Intereses
 INTERESTS_CHOICES = [
     ('MARKETING', 'Marketing Digital'),
     ('INVENTARIO', 'Gestión de Inventario'),
@@ -49,7 +49,7 @@ INTERESTS_CHOICES = [
     ('SEGUROS', 'Seguros para Negocios'),
 ]
 
-# Categorías para publicaciones del foro (MODIFICADO)
+# Categorías para publicaciones del foro
 CATEGORIA_POST_CHOICES = [
     ('NOTICIAS_CA', 'Noticias Club Almacén'),
     ('DESPACHOS', 'Despachos realizados'),
@@ -57,7 +57,7 @@ CATEGORIA_POST_CHOICES = [
     ('ACTIVIDADES', 'Actividades'),
 ]
 
-# Definición de CATEGORIAS para Beneficio (Mantenido)
+# Definición de CATEGORIAS para Beneficio
 CATEGORIAS = [
     ('DESCUENTO', 'Descuento y Ofertas'),
     ('SORTEO', 'Sorteos y Rifas'),
@@ -91,7 +91,7 @@ RUBROS_CHOICES = [
     ('VARIOS', 'Varios'),
 ]
 
-# Definición de Roles de Usuario (NUEVO)
+# Definición de Roles de Usuario
 ROLES_CHOICES = [
     ('COMERCIANTE', 'Comerciante'),
     ('PROVEEDOR', 'Proveedor'),
@@ -102,7 +102,6 @@ ROLES_CHOICES = [
 # --- MODELO PRINCIPAL DE COMERCIANTE ---
 
 class Comerciante(models.Model):
-    # ... (Campos de Comerciante existentes)
     nombre_apellido = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     password_hash = models.CharField(max_length=128) 
@@ -142,10 +141,7 @@ class Comerciante(models.Model):
     # --- CAMPOS DE PUNTOS Y ROLES ---
     puntos = models.IntegerField(default=0, verbose_name='Puntos Acumulados')
     nivel_actual = models.CharField(max_length=50, choices=NIVELES, default='BRONCE', verbose_name='Nivel de Beneficios')
-    
-    # NUEVO CAMPO: Campo para el rol del usuario (COMERCIANTE, PROVEEDOR, ADMIN)
     rol = models.CharField(max_length=15, choices=ROLES_CHOICES, default='COMERCIANTE', verbose_name='Rol de Usuario') 
-    
     es_proveedor = models.BooleanField(default=False, verbose_name='Es Proveedor')
 
     class Meta:
@@ -174,7 +170,6 @@ class Post(models.Model):
     )
     titulo = models.CharField(max_length=200, verbose_name='Título de la Publicación')
     contenido = models.TextField(verbose_name='Contenido del Post')
-    # Se utiliza el nuevo CATEGORIA_POST_CHOICES con un default
     categoria = models.CharField(max_length=50, choices=CATEGORIA_POST_CHOICES, default='NOTICIAS_CA', verbose_name='Categoría') 
     imagen_url = models.URLField(max_length=200, blank=True, null=True, verbose_name='URL de Imagen/Link de Archivo Subido')
     etiquetas = models.CharField(max_length=255, blank=True, verbose_name='Etiquetas (@usuarios, hashtags)')
@@ -189,7 +184,6 @@ class Post(models.Model):
         return f"[{self.get_categoria_display()}] {self.titulo} por {self.comerciante.nombre_apellido}"
 
 class Comentario(models.Model):
-    # ... (Comentario model se mantiene)
     post = models.ForeignKey(
         Post, 
         on_delete=models.CASCADE, 
@@ -215,7 +209,6 @@ class Comentario(models.Model):
 
 
 class Like(models.Model):
-    # ... (Like model se mantiene)
     post = models.ForeignKey(
         Post, 
         on_delete=models.CASCADE, 
@@ -240,7 +233,6 @@ class Like(models.Model):
 
 # --- MODELO BENEFICIO ---
 class Beneficio(models.Model):
-    # ... (Beneficio model se mantiene)
     titulo = models.CharField(max_length=200, verbose_name="Título del Beneficio")
     descripcion = models.TextField(verbose_name="Descripción")
     foto = models.ImageField(upload_to='beneficios_fotos/', null=True, blank=True, verbose_name="Imagen") 
@@ -266,48 +258,6 @@ class Beneficio(models.Model):
         return f"[{self.get_categoria_display()}] {self.titulo}"
 
 
-# --- MODELOS PARA EL DIRECTORIO DE PROVEEDORES ---
-
-class Proveedor(models.Model):
-    # ... (Proveedor model se mantiene)
-    # Ficha base
-    nombre = models.CharField(max_length=100)
-    descripcion = models.TextField(max_length=500, blank=True)
-    foto_perfil = models.ImageField(upload_to='proveedores/fotos/', null=True, blank=True)
-    
-    # Datos de Contacto Externo (Requerimiento de la Ficha)
-    email_contacto = models.EmailField(blank=True, null=True)
-    whatsapp_contacto = models.CharField(max_length=12, blank=True, null=True, help_text="Formato: +569XXXXXXXX")
-    
-    # Gestión de estado en línea
-    fecha_registro = models.DateTimeField(auto_now_add=True)
-    ultima_conexion = models.DateTimeField(default=timezone.now) # Usado para el estado 'en línea'
-
-    class Meta:
-        verbose_name = 'Proveedor'
-        verbose_name_plural = 'Proveedores'
-
-    def __str__(self):
-        return self.nombre
-    
-    def get_profile_picture_url(self):
-        DEFAULT_IMAGE_PATH = 'usuarios/img/default_profile.png'
-        if self.foto_perfil.name and self.foto_perfil.name != DEFAULT_IMAGE_PATH:
-            return self.foto_perfil.url
-        return static('img/default_profile.png')
-
-
-class Propuesta(models.Model):
-    # ... (Propuesta model se mantiene)
-    # La propuesta o "post" del proveedor (Simula el post que sube el proveedor)
-    proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, related_name='propuestas')
-    titulo = models.CharField(max_length=100)
-    rubros_ofertados = models.CharField(max_length=255, verbose_name='Rubros Ofertados', help_text='Separados por coma')
-    zona_geografica = models.CharField(max_length=100)
-    
-    class Meta:
-        verbose_name = "Propuesta de Proveedor"
-        verbose_name_plural = "Propuestas de Proveedores"
-        
-    def __str__(self):
-        return f"{self.titulo} - {self.proveedor.nombre}"
+# 🚨 SE HAN ELIMINADO los modelos Proveedor y Propuesta 
+# 🚨 para usar la aplicación 'proveedores' 
+# 🚨 Ahora debes ejecutar las migraciones.

@@ -2,6 +2,7 @@
 
 from django.urls import path
 from . import views
+from django.views.generic import RedirectView # <-- Importamos para redireccionar
 
 urlpatterns = [
     # AUTH
@@ -17,19 +18,18 @@ urlpatterns = [
     path('perfil/', views.perfil_view, name='perfil'),
     path('beneficios/', views.beneficios_view, name='beneficios'),
     
-    # DIRECTORIO DE PROVEEDORES
-    path('directorio/', views.directorio_view, name='directorio'),
-    path('directorio/<int:pk>/', views.proveedor_perfil_view, name='proveedor_perfil'),
-    
-    # NOTICIAS (NUEVO)
+    # NOTICIAS
     path('noticias/', views.noticias_view, name='noticias'),
     
-    # GESTIÓN DE ROLES (NUEVAS RUTAS AÑADIDAS)
-    path('proveedor/solicitar/', views.solicitar_rol_proveedor_view, name='solicitar_proveedor'),
-    path('proveedores/dashboard/', views.proveedor_dashboard_view, name='proveedor_dashboard'),
-    
-    # POSTS (DETALLE, COMENTARIO, LIKE)
+    # POSTS
     path('post/<int:post_id>/', views.post_detail_view, name='post_detail'),
     path('post/<int:post_id>/comentar/', views.add_comment_view, name='add_comment'),
     path('post/<int:post_id>/like/', views.like_post_view, name='like_post'),
+    
+    # --- REDIRECCIONES A LA NUEVA APP 'PROVEEDORES' ---
+    # Esto asegura que los enlaces viejos sigan funcionando:
+    path('directorio/', RedirectView.as_view(url='/proveedores/', permanent=True), name='directorio'),
+    path('directorio/<int:pk>/', RedirectView.as_view(url='/proveedores/%(pk)s/', permanent=True), name='proveedor_perfil'),
+    path('proveedor/solicitar/', RedirectView.as_view(url='/proveedores/panel/crear/', permanent=True), name='solicitar_proveedor'),
+    path('proveedores/dashboard/', RedirectView.as_view(url='/proveedores/panel/', permanent=True), name='proveedor_dashboard'),
 ]

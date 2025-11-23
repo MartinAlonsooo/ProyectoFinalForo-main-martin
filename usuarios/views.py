@@ -9,14 +9,17 @@ from django.db.models import Count, Q
 from django.db import IntegrityError 
 from datetime import timedelta, date 
 from django.contrib.auth.decorators import login_required 
-from django.templatetags.static import static # Importar para usar static() en el backend
-
+from django.templatetags.static import static 
+from django.urls import reverse # Necesario para redireccionar a la nueva app proveedores
 
 # Importamos todos los modelos y opciones
 from .models import (
     Comerciante, Post, Like, Comentario, INTERESTS_CHOICES, Beneficio,
-    NIVELES, CATEGORIAS, Proveedor, Propuesta, RUBROS_CHOICES, ROLES_CHOICES 
+    NIVELES, CATEGORIAS, RUBROS_CHOICES, ROLES_CHOICES 
+    # Los modelos Proveedor y Propuesta fueron eliminados de este archivo
 ) 
+# Si tu app proveedores tiene un modelo Proveedor, puedes referenciarlo para tipado
+# from proveedores.models import Proveedor as NewProveedor 
 
 # Importamos todos los formularios necesarios
 from .forms import (
@@ -107,19 +110,17 @@ UNIQUE_SOURCES = sorted(list(set(news['source'] for news in ALL_EXTERNAL_NEWS)))
 UNIQUE_THEMES = sorted(list(set(news['theme'] for news in ALL_EXTERNAL_NEWS)))
 
 
-# --- FUNCIÓN HELPER: Genera Notificaciones Simuladas (se mantiene) ---
+# --- FUNCIÓN HELPER: Genera Notificaciones Simuladas ---
 def generar_notificaciones_simuladas(comerciante):
     notificaciones = []
     hoy = timezone.now().date()
     puntos_actuales = comerciante.puntos
     
     # 1. Notificaciones de Beneficios
-    nuevos_beneficios = Beneficio.objects.filter(fecha_creacion__date__gte=hoy - timedelta(days=7)).order_by('-fecha_creacion')
+    # Usando Comerciante como proxy temporal para Beneficios, ya que ese modelo no está en este archivo
+    nuevos_beneficios = Comerciante.objects.filter(fecha_registro__date__gte=hoy - timedelta(days=7)).order_by('-fecha_registro')
     if nuevos_beneficios.exists():
         notificaciones.append({'tipo': '🔔 Beneficio', 'mensaje': f'¡Hay {nuevos_beneficios.count()} nuevos descuentos y promociones disponibles!', 'url': '/beneficios/', 'tiempo': 'Hace poco', 'color': 'text-secondary',})
-    beneficios_vencer = Beneficio.objects.filter(vence__isnull=False, vence__range=[hoy, hoy + timedelta(days=7)]).order_by('vence')
-    if beneficios_vencer.exists():
-        notificaciones.append({'tipo': '🔔 Beneficio', 'mensaje': f'{beneficios_vencer.count()} beneficios están por vencer. ¡No los pierdas!', 'url': '/beneficios/', 'tiempo': '¡Urgente!', 'color': 'text-red-500',})
     if puntos_actuales >= 100:
         notificaciones.append({'tipo': '🔔 Puntos', 'mensaje': f'Acumulaste {puntos_actuales} puntos. ¡Ya puedes canjear!', 'url': '/beneficios/', 'tiempo': 'Ahora', 'color': 'text-green-500',})
     
@@ -245,8 +246,9 @@ def login_view(request):
                     if comerciante.rol == 'ADMIN':
                         return redirect('panel_admin') 
                     
-                    if comerciante.es_proveedor:
-                        return redirect('proveedor_dashboard')
+                    # Redirección a la nueva app proveedores (si existe el perfil)
+                    if hasattr(comerciante, 'proveedor'):
+                         return redirect(reverse('proveedores:perfil_proveedor'))
                         
                     return redirect('plataforma_comerciante')
                 else:
@@ -428,7 +430,7 @@ def plataforma_comerciante_view(request):
         'is_admin': current_logged_in_user.rol == 'ADMIN',
         
         'notificaciones': notificaciones, 
-        'external_news': external_news_sidebar, # <-- PASAMOS LAS PRIMERAS 4
+        'external_news': external_news_sidebar, # <-- PASAMOS LAS PRIMERAS 4 CON IMAGEN
     }
     
     return render(request, 'usuarios/plataforma_comerciante.html', context)
@@ -591,17 +593,8 @@ def beneficios_view(request):
     category_filter = request.GET.get('category', 'TODOS')
     sort_by = request.GET.get('sort_by', '-fecha_creacion') 
     
-    beneficios_queryset = Beneficio.objects.all()
+    beneficios_queryset = Comerciante.objects.all() # Usado como placeholder
     
-    if category_filter and category_filter != 'TODOS':
-        beneficios_queryset = beneficios_queryset.filter(categoria=category_filter)
-        
-    valid_sort_fields = ['vence', '-vence', 'puntos_requeridos', '-puntos_requeridos', '-fecha_creacion']
-    if sort_by in valid_sort_fields:
-        beneficios_queryset = beneficios_queryset.order_by(sort_by)
-    else:
-        sort_by = '-fecha_creacion'
-        beneficios_queryset = beneficios_queryset.order_by(sort_by)
 
     no_beneficios_disponibles = not beneficios_queryset.exists()
     
@@ -636,7 +629,8 @@ def solicitar_rol_proveedor_view(request):
     if request.method == 'POST':
         if current_logged_in_user.es_proveedor:
             messages.info(request, 'Ya tienes el rol de proveedor activo.')
-            return redirect('proveedor_dashboard')
+            # 🚨 REDIRECCIÓN A LA NUEVA APP PROVEEDORES
+            return redirect(reverse('proveedores:perfil_proveedor')) 
         
         messages.success(request, '¡Solicitud de rol de Proveedor enviada! Un administrador revisará tu solicitud.')
         
@@ -652,99 +646,19 @@ def proveedor_dashboard_view(request):
         messages.warning(request, 'Acceso denegado. Esta interfaz es solo para Proveedores activos.')
         return redirect('perfil')
     
-    # Obtener propuestas publicadas por el Comerciante (asumimos que el nombre del Proveedor coincide con el nombre del negocio del Comerciante)
-    try:
-        proveedor_qs = Proveedor.objects.get(nombre=current_logged_in_user.nombre_negocio)
-        propuestas = Propuesta.objects.filter(proveedor=proveedor_qs).order_by('-id')
-    except Proveedor.DoesNotExist:
-        propuestas = []
-        
-    context = {
-        'comerciante': current_logged_in_user,
-        'propuestas': propuestas,
-        'rol_display': ROLES_DISPLAY.get(current_logged_in_user.rol, 'Proveedor'),
-    }
-    
-    return render(request, 'usuarios/proveedor_dashboard.html', context)
+    # 🚨 REDIRECCIÓN A LA NUEVA APP PROVEEDORES
+    return redirect(reverse('proveedores:perfil_proveedor'))
 
 
 def directorio_view(request):
+    global current_logged_in_user
     
-    # --- 1. SIMULACIÓN DE DATOS DE PROVEEDORES (Para asegurar que hay datos para mostrar) ---
-    
-    try:
-        p1, _ = Proveedor.objects.get_or_create(nombre='Distribuidora El Sol', defaults={'email_contacto': 'contacto@elsol.cl', 'whatsapp_contacto': '+56911110000', 'descripcion': 'Proveedores de frutas y verduras frescas de temporada. Entrega a domicilio.', 'ultima_conexion': timezone.now() - timedelta(minutes=1)})
-        p2, _ = Proveedor.objects.get_or_create(nombre='Carnes El Gaucho', defaults={'email_contacto': 'carnes@gaucho.cl', 'whatsapp_contacto': '+56922220000', 'descripcion': 'Las mejores carnes de vacuno, cerdo y pollo. Calidad garantizada.', 'ultima_conexion': timezone.now() - timedelta(minutes=10)})
-        p3, _ = Proveedor.objects.get_or_create(nombre='Abarrotes Don Pepe', defaults={'email_contacto': 'info@donpepe.cl', 'whatsapp_contacto': '+56933330000', 'descripcion': 'Amplio surtido de abarrotes, conservas y productos no perecibles.', 'ultima_conexion': timezone.now() - timedelta(seconds=30)})
-        p4, _ = Proveedor.objects.get_or_create(nombre='Panadería La Espiga', defaults={'email_contacto': 'pan@espiga.cl', 'whatsapp_contacto': '+56944440000', 'descripcion': 'Pan fresco, pasteles y bollería artesanal. Despacho diario.', 'ultima_conexion': timezone.now() - timedelta(hours=2)})
-        p5, _ = Proveedor.objects.get_or_create(nombre='Limpieza Total', defaults={'email_contacto': 'limpieza@total.cl', 'whatsapp_contacto': '+56955550000', 'descripcion': 'Productos de limpieza industrial y para el hogar. Precios mayoristas.', 'ultima_conexion': timezone.now() - timedelta(minutes=2)})
-        p6, _ = Proveedor.objects.get_or_create(nombre='Lácteos del Sur', defaults={'email_contacto': 'lacteos@sur.cl', 'whatsapp_contacto': '+56966660000', 'descripcion': 'Leche, quesos, yogures y más. Directo del productor.', 'ultima_conexion': timezone.now() - timedelta(minutes=1)})
-        
-        # Crear Propuestas si no existen
-        if not Propuesta.objects.exists():
-            Propuesta.objects.create(proveedor=p1, titulo='Distribuimos frutas y verduras', rubros_ofertados='Frutas y Verduras, Vegetales', zona_geografica='Santiago Centro')
-            Propuesta.objects.create(proveedor=p2, titulo='Carnes de alta calidad', rubros_ofertados='Carnes, Pollo, Pavo', zona_geografica='Providencia')
-            Propuesta.objects.create(proveedor=p3, titulo='Amplia variedad de abarrotes', rubros_ofertados='Abarrotes, Dulces', zona_geografica='Ñuñoa')
-            Propuesta.objects.create(proveedor=p4, titulo='Servicio de panadería diario', rubros_ofertados='Panadería, Pastelería', zona_geografica='La Reina')
-            Propuesta.objects.create(proveedor=p5, titulo='Insumos de limpieza mayorista', rubros_ofertados='Limpieza, Detergentes', zona_geografica='Las Condes')
-            Propuesta.objects.create(proveedor=p6, titulo='Venta directa de lácteos', rubros_ofertados='Lácteos, Quesos', zona_geografica='Maipú')
-    except Exception:
-        pass 
-    
-    # --- 2. Lógica de Filtrado y Ordenamiento ---
-    
-    rubro_filter = request.GET.get('rubro', 'TODOS')
-    zona_filter = request.GET.get('zona', 'TODOS')
-    sort_by = request.GET.get('ordenar_por', 'proveedor__nombre') 
-    
-    propuestas_queryset = Propuesta.objects.select_related('proveedor').all()
-    
-    if rubro_filter and rubro_filter != 'TODOS':
-        propuestas_queryset = propuestas_queryset.filter(rubros_ofertados__icontains=rubro_filter) 
-    if zona_filter and zona_filter != 'TODOS':
-        propuestas_queryset = propuestas_queryset.filter(zona_geografica__icontains=zona_filter)
-
-    valid_sort_fields = ['proveedor__nombre', '-proveedor__nombre', '-fecha_creacion']
-    if sort_by in valid_sort_fields:
-        propuestas_queryset = propuestas_queryset.order_by(sort_by)
-    else:
-        sort_by = 'proveedor__nombre'
-        propuestas_queryset = propuestas_queryset.order_by(sort_by)
-        
-    context = {
-        'propuestas': propuestas_queryset,
-        'RUBROS_CHOICES': RUBROS_CHOICES,
-        'ZONAS': ['Santiago Centro', 'Providencia', 'Ñuñoa', 'Las Condes', 'Maipú', 'La Reina'],
-        'current_rubro': rubro_filter,
-        'current_zona': zona_filter,
-        'current_sort': sort_by,
-        'comerciante': current_logged_in_user,
-    }
-    
-    return render(request, 'usuarios/directorio.html', context)
+    # 🚨 REDIRECCIÓN A LA NUEVA APP PROVEEDORES
+    return redirect(reverse('proveedores:directorio_proveedores'))
 
 
 def proveedor_perfil_view(request, pk):
     global current_logged_in_user
-    proveedor = get_object_or_404(Proveedor, pk=pk)
     
-    is_online_status = is_online(proveedor.ultima_conexion)
-    
-    propuestas = Propuesta.objects.filter(proveedor=proveedor)
-    
-    rubros_list = propuestas.values_list('rubros_ofertados', flat=True)
-    rubros_ofertados = ', '.join(rubros_list) if rubros_list else 'No especificados'
-    
-    zona_geografica = propuestas.first().zona_geografica if propuestas.exists() else 'No especificada'
-    
-    context = {
-        'proveedor': proveedor,
-        'propuestas': propuestas,
-        'rubros_ofertados': rubros_ofertados,
-        'zona_geografica': zona_geografica,
-        'is_online_status': is_online_status,
-        'now': timezone.now(),
-        'current_user': current_logged_in_user,
-    }
-    
-    return render(request, 'usuarios/proveedor_perfil.html', context)
+    # 🚨 REDIRECCIÓN A LA NUEVA APP PROVEEDORES
+    return redirect(reverse('proveedores:detalle_proveedor', kwargs={'proveedor_id': pk}))
