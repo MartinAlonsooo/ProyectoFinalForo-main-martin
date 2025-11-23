@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required
 # Importamos todos los modelos y opciones
 from .models import (
     Comerciante, Post, Like, Comentario, INTERESTS_CHOICES, Beneficio,
-    NIVELES, CATEGORIAS, Proveedor, Propuesta, RUBROS_CHOICES 
+    NIVELES, CATEGORIAS, Proveedor, Propuesta, RUBROS_CHOICES, ROLES_CHOICES # <-- Se añade ROLES_CHOICES
 ) 
 
 # Importamos todos los formularios necesarios
@@ -31,13 +31,8 @@ from .forms import (
 # --- SIMULACIÓN DE ESTADO DE SESIÓN GLOBAL ---
 current_logged_in_user = None 
 
-# Definición de Roles
-ROLES = {
-    'COMERCIANTE': 'Comerciante Verificado',
-    'PROVEEDOR': 'Proveedor', 
-    'ADMIN': 'Administrador',
-    'INVITADO': 'Invitado'
-}
+# Definición de Roles Display (usando ROLES_CHOICES del modelo)
+ROLES_DISPLAY = dict(ROLES_CHOICES)
 
 # --- FUNCIÓN DE CÁLCULO DE NIVEL ---
 def calcular_nivel_y_progreso(puntos):
@@ -99,8 +94,10 @@ def registro_view(request):
             if comuna_final:
                 nuevo_comerciante.comuna = comuna_final
             
+            # Asegurar que los nuevos registros son COMERCIANTE por defecto
             nuevo_comerciante.puntos = 0
             nuevo_comerciante.nivel_actual = 'BRONCE'
+            nuevo_comerciante.rol = 'COMERCIANTE' # <--- Asegura el rol por defecto
             
             try:
                 nuevo_comerciante.save()
@@ -143,8 +140,13 @@ def login_view(request):
                     current_logged_in_user = comerciante
                     
                     messages.success(request, f'¡Bienvenido {comerciante.nombre_apellido}!')
+                    
+                    if comerciante.rol == 'ADMIN':
+                        return redirect('panel_admin') # Redirigir a panel de admin si es ADMIN
+                    
                     if comerciante.es_proveedor:
                         return redirect('proveedor_dashboard')
+                        
                     return redirect('plataforma_comerciante')
                 else:
                     messages.error(request, 'Contraseña incorrecta. Intenta nuevamente.')
@@ -250,7 +252,7 @@ def perfil_view(request):
 
     context = {
         'comerciante': comerciante,
-        'rol_usuario': ROLES.get('COMERCIANTE', 'Usuario'),
+        'rol_usuario': ROLES_DISPLAY.get(comerciante.rol, 'Usuario'), # <-- MODIFIED
         'nombre_negocio_display': comerciante.nombre_negocio,
         
         'puntos_actuales': comerciante.puntos,
@@ -280,7 +282,10 @@ def plataforma_comerciante_view(request):
         messages.warning(request, 'Por favor, inicia sesión para acceder a la plataforma.')
         return redirect('login') 
         
-    posts_query = Post.objects.select_related('comerciante').annotate(
+    # MODIFICACIÓN: Filtrar posts para mostrar SOLO publicaciones de usuarios con rol 'ADMIN'
+    posts_query = Post.objects.select_related('comerciante').filter(
+        comerciante__rol='ADMIN'
+    ).annotate(
         comentarios_count=Count('comentarios', distinct=True), 
         likes_count=Count('likes', distinct=True),
         is_liked=Count('likes', filter=Q(likes__comerciante=current_logged_in_user)) 
@@ -296,17 +301,20 @@ def plataforma_comerciante_view(request):
     else:
         posts = posts_query.all().order_by('-fecha_publicacion')
         if not categoria_filtros or 'TODAS' in categoria_filtros:
-            categoria_filtros = ['TODOS']
+            categoria_filtros = ['TODAS']
         
     context = {
         'comerciante': current_logged_in_user,
-        'rol_usuario': ROLES.get('COMERCIANTE', 'Usuario'), 
+        'rol_usuario': ROLES_DISPLAY.get(current_logged_in_user.rol, 'Usuario'), # <-- MODIFIED
         'post_form': PostForm(),
         'posts': posts,
+        # CATEGORIA_POST_CHOICES es dinámico, usa la versión actualizada del modelo
         'CATEGORIA_POST_CHOICES': Post._meta.get_field('categoria').choices, 
         'categoria_seleccionada': categoria_filtros, 
         'comentario_form': ComentarioForm(), 
         'message': f'Bienvenido a la plataforma, {current_logged_in_user.nombre_apellido.split()[0]}.',
+        # Flag para controlar visibilidad de elementos de Admin en el template
+        'is_admin': current_logged_in_user.rol == 'ADMIN',
     }
     
     return render(request, 'usuarios/plataforma_comerciante.html', context)
@@ -315,7 +323,13 @@ def plataforma_comerciante_view(request):
 def publicar_post_view(request):
     global current_logged_in_user
     
+    # MODIFICACIÓN: Restricción de publicación solo para 'ADMIN'
+    if not current_logged_in_user or current_logged_in_user.rol != 'ADMIN': 
+        messages.error(request, 'No tienes permiso para crear publicaciones en el foro.')
+        return redirect('plataforma_comerciante') 
+            
     if request.method == 'POST':
+        # ... (El resto de la lógica de publicación solo se ejecuta si es ADMIN)
         if not current_logged_in_user:
             messages.error(request, 'Debes iniciar sesión para publicar.')
             return redirect('login') 
@@ -388,10 +402,10 @@ def add_comment_view(request, post_id):
             nuevo_comentario.comerciante = current_logged_in_user
             nuevo_comentario.save()
             messages.success(request, '¡Comentario publicado con éxito!')
-            return redirect('plataforma_comerciante') 
+            return redirect('plataforma_comerciante') # Se redirige al foro principal para que el comerciante siga leyendo
         else:
             messages.error(request, 'Error al publicar el comentario. Asegúrate de que el contenido no esté vacío.')
-            return redirect('plataforma_comerciante') 
+            return redirect('plataforma_comerciante') # Se redirige al foro principal para que el comerciante siga leyendo
             
     return redirect('plataforma_comerciante')
 
@@ -451,7 +465,7 @@ def beneficios_view(request):
     
     context = {
         'comerciante': comerciante,
-        'rol_usuario': ROLES.get('COMERCIANTE', 'Usuario'), 
+        'rol_usuario': ROLES_DISPLAY.get(comerciante.rol, 'Usuario'), # <-- MODIFIED
         
         'puntos_actuales': comerciante.puntos,
         'nivel_actual': dict(NIVELES).get(progreso['nivel_codigo'], 'Bronce'),
@@ -508,7 +522,7 @@ def proveedor_dashboard_view(request):
     context = {
         'comerciante': current_logged_in_user,
         'propuestas': propuestas,
-        'rol_display': ROLES.get('PROVEEDOR', 'Proveedor'),
+        'rol_display': ROLES_DISPLAY.get(current_logged_in_user.rol, 'Proveedor'), # <-- MODIFIED
     }
     
     return render(request, 'usuarios/proveedor_dashboard.html', context)

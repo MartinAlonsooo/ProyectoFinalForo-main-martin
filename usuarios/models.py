@@ -49,13 +49,12 @@ INTERESTS_CHOICES = [
     ('SEGUROS', 'Seguros para Negocios'),
 ]
 
-# Categorías para publicaciones del foro (MANTENIDO)
+# Categorías para publicaciones del foro (MODIFICADO)
 CATEGORIA_POST_CHOICES = [
-    ('DUDA', 'Duda / Pregunta'),
-    ('OPINION', 'Opinión / Debate'),
-    ('RECOMENDACION', 'Recomendación'),
-    ('NOTICIA', 'Noticia del Sector'),
-    ('GENERAL', 'General'),
+    ('NOTICIAS_CA', 'Noticias Club Almacén'),
+    ('DESPACHOS', 'Despachos realizados'),
+    ('NUEVOS_SOCIOS', 'Nuevos socios'),
+    ('ACTIVIDADES', 'Actividades'),
 ]
 
 # Definición de CATEGORIAS para Beneficio (Mantenido)
@@ -91,6 +90,14 @@ RUBROS_CHOICES = [
     ('PANADERIA', 'Panadería'),
     ('VARIOS', 'Varios'),
 ]
+
+# Definición de Roles de Usuario (NUEVO)
+ROLES_CHOICES = [
+    ('COMERCIANTE', 'Comerciante'),
+    ('PROVEEDOR', 'Proveedor'),
+    ('ADMIN', 'Administrador'),
+]
+
 
 # --- MODELO PRINCIPAL DE COMERCIANTE ---
 
@@ -136,7 +143,9 @@ class Comerciante(models.Model):
     puntos = models.IntegerField(default=0, verbose_name='Puntos Acumulados')
     nivel_actual = models.CharField(max_length=50, choices=NIVELES, default='BRONCE', verbose_name='Nivel de Beneficios')
     
-    # NUEVO CAMPO: Campo que causó el error anterior (debe estar aquí)
+    # NUEVO CAMPO: Campo para el rol del usuario (COMERCIANTE, PROVEEDOR, ADMIN)
+    rol = models.CharField(max_length=15, choices=ROLES_CHOICES, default='COMERCIANTE', verbose_name='Rol de Usuario') 
+    
     es_proveedor = models.BooleanField(default=False, verbose_name='Es Proveedor')
 
     class Meta:
@@ -165,7 +174,8 @@ class Post(models.Model):
     )
     titulo = models.CharField(max_length=200, verbose_name='Título de la Publicación')
     contenido = models.TextField(verbose_name='Contenido del Post')
-    categoria = models.CharField(max_length=50, choices=CATEGORIA_POST_CHOICES, default='GENERAL', verbose_name='Categoría')
+    # Se utiliza el nuevo CATEGORIA_POST_CHOICES con un default
+    categoria = models.CharField(max_length=50, choices=CATEGORIA_POST_CHOICES, default='NOTICIAS_CA', verbose_name='Categoría') 
     imagen_url = models.URLField(max_length=200, blank=True, null=True, verbose_name='URL de Imagen/Link de Archivo Subido')
     etiquetas = models.CharField(max_length=255, blank=True, verbose_name='Etiquetas (@usuarios, hashtags)')
     fecha_publicacion = models.DateTimeField(default=timezone.now, verbose_name='Fecha de Publicación')
@@ -179,6 +189,7 @@ class Post(models.Model):
         return f"[{self.get_categoria_display()}] {self.titulo} por {self.comerciante.nombre_apellido}"
 
 class Comentario(models.Model):
+    # ... (Comentario model se mantiene)
     post = models.ForeignKey(
         Post, 
         on_delete=models.CASCADE, 
@@ -204,6 +215,7 @@ class Comentario(models.Model):
 
 
 class Like(models.Model):
+    # ... (Like model se mantiene)
     post = models.ForeignKey(
         Post, 
         on_delete=models.CASCADE, 
@@ -228,6 +240,7 @@ class Like(models.Model):
 
 # --- MODELO BENEFICIO ---
 class Beneficio(models.Model):
+    # ... (Beneficio model se mantiene)
     titulo = models.CharField(max_length=200, verbose_name="Título del Beneficio")
     descripcion = models.TextField(verbose_name="Descripción")
     foto = models.ImageField(upload_to='beneficios_fotos/', null=True, blank=True, verbose_name="Imagen") 
@@ -256,6 +269,7 @@ class Beneficio(models.Model):
 # --- MODELOS PARA EL DIRECTORIO DE PROVEEDORES ---
 
 class Proveedor(models.Model):
+    # ... (Proveedor model se mantiene)
     # Ficha base
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(max_length=500, blank=True)
@@ -284,6 +298,7 @@ class Proveedor(models.Model):
 
 
 class Propuesta(models.Model):
+    # ... (Propuesta model se mantiene)
     # La propuesta o "post" del proveedor (Simula el post que sube el proveedor)
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, related_name='propuestas')
     titulo = models.CharField(max_length=100)
