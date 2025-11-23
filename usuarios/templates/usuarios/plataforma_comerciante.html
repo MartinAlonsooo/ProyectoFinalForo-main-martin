@@ -1,6 +1,6 @@
 {% load static %}
-<!DOCTYPE html>
-<html class="light" lang="es">
+{% load my_custom_filters %} 
+<DOCTYPE html>
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -35,12 +35,21 @@
     </script>
     
     <style>
-        .off-canvas-panel {
+        /* Panel para publicaciones */
+        .off-canvas-panel-post {
             transition: transform 0.3s ease-in-out;
             transform: translateX(100%); /* Oculto a la derecha */
         }
-        .off-canvas-panel.active {
+        .off-canvas-panel-post.active {
             transform: translateX(0); /* Visible */
+        }
+        /* Panel para notificaciones (NUEVO) */
+        .off-canvas-panel-notifications {
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(100%); 
+        }
+        .off-canvas-panel-notifications.active {
+            transform: translateX(0); 
         }
     </style>
 </head>
@@ -69,8 +78,13 @@
                     </label>
                 </div>
                 <div class="flex justify-end gap-4 items-center">
-                    <button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
+                    {# Botón de Notificaciones (MODIFICADO) #}
+                    <button onclick="toggleNotifications('notifications-panel');" 
+                            class="relative flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
                         <span class="material-symbols-outlined text-2xl">notifications</span>
+                        {% if notificaciones|length > 0 %}
+                        <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full animate-pulse"></span>
+                        {% endif %}
                     </button>
                     
                     <a href="{% url 'perfil' %}" class="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -88,6 +102,7 @@
             </header>
             
             <main class="flex-1 w-full max-w-screen-2xl mx-auto p-6 lg:p-8">
+            {# ... (El contenido de la página se mantiene) ... #}
                 {% if messages %}
                     <div class="mb-6">
                     {% for message in messages %}
@@ -159,7 +174,6 @@
                                                     <span class="text-sm text-text-light dark:text-text-dark">Todas</span>
                                                 </label>
                                                 
-                                                {# El loop de categorías se actualiza automáticamente con las nuevas opciones del modelo #}
                                                 {% for key, value in CATEGORIA_POST_CHOICES %}
                                                     <label class="flex items-center space-x-3">
                                                         <input type="checkbox" name="categoria" value="{{ key }}" 
@@ -176,7 +190,6 @@
                                             </form>
                                         </div>
                                         
-                                        {# MODIFICACIÓN: Mostrar botón solo si es Admin #}
                                         {% if is_admin %}
                                         <button onclick="document.getElementById('off-canvas-publicar').classList.add('active');" 
                                                 class="min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-secondary text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] hover:bg-secondary/90 transition-colors duration-200 hidden sm:flex">
@@ -375,7 +388,7 @@
         </div>
     </div>
     
-    {# MODIFICACIÓN: Ocultar botón flotante para móvil si no es Admin #}
+    {# Botón y panel de publicación (se mantiene) #}
     {% if is_admin %}
     <div class="fixed bottom-0 left-0 w-full p-4 lg:hidden z-40 bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-gray-700 shadow-lg">
         <button onclick="document.getElementById('off-canvas-publicar').classList.add('active');" 
@@ -386,9 +399,9 @@
     </div>
     {% endif %}
 
-    {# MODIFICACIÓN: Ocultar el modal de publicación si no es Admin #}
+    {# Modal de Publicación (se mantiene) #}
     {% if is_admin %}
-    <div id="off-canvas-publicar" class="off-canvas-panel fixed top-0 right-0 w-full sm:w-1/2 lg:w-1/3 h-full bg-white dark:bg-white z-50 shadow-2xl overflow-y-auto p-6 flex flex-col">
+    <div id="off-canvas-publicar" class="off-canvas-panel-post fixed top-0 right-0 w-full sm:w-1/2 lg:w-1/3 h-full bg-white dark:bg-white z-50 shadow-2xl overflow-y-auto p-6 flex flex-col">
         <div class="flex justify-between items-center pb-4 mb-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-2xl font-bold text-text-light dark:text-text-dark">Crear Nueva Publicación</h3>
             <button onclick="document.getElementById('off-canvas-publicar').classList.remove('active');" 
@@ -398,6 +411,7 @@
         </div>
 
         <form method="POST" action="{% url 'crear_publicacion' %}" enctype="multipart/form-data" class="space-y-4 flex-grow flex flex-col">
+        {# ... (Contenido del formulario de publicación se mantiene) ... #}
             {% csrf_token %}
             
             <div>
@@ -463,6 +477,57 @@
     </div>
     {% endif %}
 
+    {# Panel Deslizable de Notificaciones (NUEVO) #}
+    <div id="notifications-panel" class="off-canvas-panel-notifications fixed top-0 right-0 w-full sm:w-96 h-full bg-white dark:bg-background-dark z-50 shadow-2xl overflow-y-auto flex flex-col">
+        <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-xl font-bold text-text-light dark:text-text-dark">Notificaciones ({{ notificaciones|length }})</h3>
+            <button onclick="toggleNotifications('notifications-panel')" 
+                    class="text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">close</span>
+            </button>
+        </div>
+
+        <div class="flex-grow divide-y divide-gray-100 dark:divide-gray-700">
+            {% for notificacion in notificaciones %}
+            <a href="{{ notificacion.url }}" onclick="toggleNotifications('notifications-panel')" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <div class="flex items-start gap-3">
+                    <div class="shrink-0 pt-1">
+                        <span class="material-symbols-outlined text-lg {{ notificacion.color }}">{{ notificacion.tipo|first_word_to_icon }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-text-light dark:text-text-dark">{{ notificacion.mensaje }}</p>
+                        <p class="text-xs text-text-muted-light mt-1">{{ notificacion.tiempo }} • {{ notificacion.tipo }}</p>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="p-8 text-center text-text-muted-light">
+                <span class="material-symbols-outlined text-4xl mb-2">notifications_off</span>
+                <p>No tienes notificaciones nuevas.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 text-center">
+            <button onclick="alert('Se simula marcar todo como leído.')" class="text-primary text-sm font-semibold hover:underline">
+                Marcar todo como leído
+            </button>
+        </div>
+    </div>
+    
+<script>
+    // Se mantiene la función toggleFilter
+
+    // FUNCIÓN NUEVA: Para mostrar/ocultar el panel de notificaciones
+    function toggleNotifications(panelId) {
+        const panel = document.getElementById(panelId);
+        if (panel) {
+            panel.classList.toggle('active');
+        }
+    }
+
+    // Se mantienen las funciones toggleComments y toggleHiddenComments
+</script>
 <script>
     function toggleFilter(contentId, iconId) {
         const content = document.getElementById(contentId);

@@ -7,13 +7,13 @@ from django.core.files.storage import default_storage
 from django.utils import timezone
 from django.db.models import Count, Q 
 from django.db import IntegrityError 
-from datetime import timedelta 
+from datetime import timedelta, date # <-- Se añade 'date' para la lógica de notificaciones
 from django.contrib.auth.decorators import login_required 
 
 # Importamos todos los modelos y opciones
 from .models import (
     Comerciante, Post, Like, Comentario, INTERESTS_CHOICES, Beneficio,
-    NIVELES, CATEGORIAS, Proveedor, Propuesta, RUBROS_CHOICES, ROLES_CHOICES # <-- Se añade ROLES_CHOICES
+    NIVELES, CATEGORIAS, Proveedor, Propuesta, RUBROS_CHOICES, ROLES_CHOICES 
 ) 
 
 # Importamos todos los formularios necesarios
@@ -33,6 +33,85 @@ current_logged_in_user = None
 
 # Definición de Roles Display (usando ROLES_CHOICES del modelo)
 ROLES_DISPLAY = dict(ROLES_CHOICES)
+
+# --- FUNCIÓN HELPER: Genera Notificaciones Simuladas (NUEVO) ---
+def generar_notificaciones_simuladas(comerciante):
+    notificaciones = []
+    hoy = timezone.now().date()
+    puntos_actuales = comerciante.puntos
+    
+    # 1. Notificaciones de Beneficios
+    
+    # Nuevos descuentos o promociones disponibles (últimos 7 días)
+    nuevos_beneficios = Beneficio.objects.filter(fecha_creacion__date__gte=hoy - timedelta(days=7)).order_by('-fecha_creacion')
+    if nuevos_beneficios.exists():
+        notificaciones.append({
+            'tipo': '🔔 Beneficio',
+            'mensaje': f'¡Hay {nuevos_beneficios.count()} nuevos descuentos y promociones disponibles!',
+            'url': '/beneficios/',
+            'tiempo': 'Hace poco',
+            'color': 'text-secondary',
+        })
+
+    # Beneficio cerca de vencer (próximos 7 días)
+    beneficios_vencer = Beneficio.objects.filter(
+        vence__isnull=False, 
+        vence__range=[hoy, hoy + timedelta(days=7)]
+    ).order_by('vence')
+    if beneficios_vencer.exists():
+        notificaciones.append({
+            'tipo': '🔔 Beneficio',
+            'mensaje': f'{beneficios_vencer.count()} beneficios están por vencer. ¡No los pierdas!',
+            'url': '/beneficios/',
+            'tiempo': '¡Urgente!',
+            'color': 'text-red-500',
+        })
+        
+    # Puntos acumulados o canjeables (simulado si tiene 100+ puntos)
+    if puntos_actuales >= 100:
+        notificaciones.append({
+            'tipo': '🔔 Puntos',
+            'mensaje': f'Acumulaste {puntos_actuales} puntos. ¡Ya puedes canjear!',
+            'url': '/beneficios/',
+            'tiempo': 'Ahora',
+            'color': 'text-green-500',
+        })
+        
+    # 2. Invitaciones
+    
+    # Invitación a evento, capacitación, taller (Simulación)
+    fecha_evento_simulado = hoy + timedelta(days=2)
+    notificaciones.append({
+        'tipo': '📨 Invitación',
+        'mensaje': f'Recordatorio: Taller de Marketing para Almacenes este {fecha_evento_simulado.strftime("%d/%m")}.',
+        'url': '#',
+        'tiempo': 'Hace 1 día',
+        'color': 'text-primary',
+    })
+    
+    # 4. Redes Sociales integradas (Simulación)
+    
+    # Nuevo video en YouTube del Club
+    notificaciones.append({
+        'tipo': '📱 Contenido',
+        'mensaje': '¡Nuevo video! 5 Claves para Optimizar tu Inventario de Minimarket.',
+        'url': 'https://www.youtube.com/user/ClubAlmacen',
+        'tiempo': 'Hace 3 horas',
+        'color': 'text-red-600',
+    })
+    
+    # 6. Reuniones (Simulación)
+    
+    # Invitación a reunión
+    notificaciones.append({
+        'tipo': '💬 Reunión',
+        'mensaje': 'Invitación a Reunión de Socios de Santiago Centro (Google Meet).',
+        'url': '#',
+        'tiempo': 'Hoy',
+        'color': 'text-purple-600',
+    })
+
+    return notificaciones 
 
 # --- FUNCIÓN DE CÁLCULO DE NIVEL ---
 def calcular_nivel_y_progreso(puntos):
@@ -97,7 +176,7 @@ def registro_view(request):
             # Asegurar que los nuevos registros son COMERCIANTE por defecto
             nuevo_comerciante.puntos = 0
             nuevo_comerciante.nivel_actual = 'BRONCE'
-            nuevo_comerciante.rol = 'COMERCIANTE' # <--- Asegura el rol por defecto
+            nuevo_comerciante.rol = 'COMERCIANTE' 
             
             try:
                 nuevo_comerciante.save()
@@ -142,7 +221,7 @@ def login_view(request):
                     messages.success(request, f'¡Bienvenido {comerciante.nombre_apellido}!')
                     
                     if comerciante.rol == 'ADMIN':
-                        return redirect('panel_admin') # Redirigir a panel de admin si es ADMIN
+                        return redirect('panel_admin') 
                     
                     if comerciante.es_proveedor:
                         return redirect('proveedor_dashboard')
@@ -249,10 +328,13 @@ def perfil_view(request):
     interests_form = InterestsForm(initial={'intereses': [c for c in intereses_actuales_codigos if c]})
 
     intereses_choices_dict = dict(INTERESTS_CHOICES)
+    
+    # Generar notificaciones
+    notificaciones = generar_notificaciones_simuladas(comerciante)
 
     context = {
         'comerciante': comerciante,
-        'rol_usuario': ROLES_DISPLAY.get(comerciante.rol, 'Usuario'), # <-- MODIFIED
+        'rol_usuario': ROLES_DISPLAY.get(comerciante.rol, 'Usuario'), 
         'nombre_negocio_display': comerciante.nombre_negocio,
         
         'puntos_actuales': comerciante.puntos,
@@ -268,6 +350,8 @@ def perfil_view(request):
         
         'intereses_actuales_codigos': [c for c in intereses_actuales_codigos if c],
         'intereses_choices_dict': intereses_choices_dict,
+        
+        'notificaciones': notificaciones, 
     }
     
     return render(request, 'usuarios/perfil.html', context)
@@ -282,7 +366,6 @@ def plataforma_comerciante_view(request):
         messages.warning(request, 'Por favor, inicia sesión para acceder a la plataforma.')
         return redirect('login') 
         
-    # MODIFICACIÓN: Filtrar posts para mostrar SOLO publicaciones de usuarios con rol 'ADMIN'
     posts_query = Post.objects.select_related('comerciante').filter(
         comerciante__rol='ADMIN'
     ).annotate(
@@ -302,19 +385,22 @@ def plataforma_comerciante_view(request):
         posts = posts_query.all().order_by('-fecha_publicacion')
         if not categoria_filtros or 'TODAS' in categoria_filtros:
             categoria_filtros = ['TODAS']
+            
+    # Generar notificaciones
+    notificaciones = generar_notificaciones_simuladas(current_logged_in_user)
         
     context = {
         'comerciante': current_logged_in_user,
-        'rol_usuario': ROLES_DISPLAY.get(current_logged_in_user.rol, 'Usuario'), # <-- MODIFIED
+        'rol_usuario': ROLES_DISPLAY.get(current_logged_in_user.rol, 'Usuario'),
         'post_form': PostForm(),
         'posts': posts,
-        # CATEGORIA_POST_CHOICES es dinámico, usa la versión actualizada del modelo
         'CATEGORIA_POST_CHOICES': Post._meta.get_field('categoria').choices, 
         'categoria_seleccionada': categoria_filtros, 
         'comentario_form': ComentarioForm(), 
         'message': f'Bienvenido a la plataforma, {current_logged_in_user.nombre_apellido.split()[0]}.',
-        # Flag para controlar visibilidad de elementos de Admin en el template
         'is_admin': current_logged_in_user.rol == 'ADMIN',
+        
+        'notificaciones': notificaciones, 
     }
     
     return render(request, 'usuarios/plataforma_comerciante.html', context)
@@ -323,13 +409,11 @@ def plataforma_comerciante_view(request):
 def publicar_post_view(request):
     global current_logged_in_user
     
-    # MODIFICACIÓN: Restricción de publicación solo para 'ADMIN'
     if not current_logged_in_user or current_logged_in_user.rol != 'ADMIN': 
         messages.error(request, 'No tienes permiso para crear publicaciones en el foro.')
         return redirect('plataforma_comerciante') 
             
     if request.method == 'POST':
-        # ... (El resto de la lógica de publicación solo se ejecuta si es ADMIN)
         if not current_logged_in_user:
             messages.error(request, 'Debes iniciar sesión para publicar.')
             return redirect('login') 
@@ -402,10 +486,10 @@ def add_comment_view(request, post_id):
             nuevo_comentario.comerciante = current_logged_in_user
             nuevo_comentario.save()
             messages.success(request, '¡Comentario publicado con éxito!')
-            return redirect('plataforma_comerciante') # Se redirige al foro principal para que el comerciante siga leyendo
+            return redirect('plataforma_comerciante') 
         else:
             messages.error(request, 'Error al publicar el comentario. Asegúrate de que el contenido no esté vacío.')
-            return redirect('plataforma_comerciante') # Se redirige al foro principal para que el comerciante siga leyendo
+            return redirect('plataforma_comerciante') 
             
     return redirect('plataforma_comerciante')
 
@@ -465,7 +549,7 @@ def beneficios_view(request):
     
     context = {
         'comerciante': comerciante,
-        'rol_usuario': ROLES_DISPLAY.get(comerciante.rol, 'Usuario'), # <-- MODIFIED
+        'rol_usuario': ROLES_DISPLAY.get(comerciante.rol, 'Usuario'),
         
         'puntos_actuales': comerciante.puntos,
         'nivel_actual': dict(NIVELES).get(progreso['nivel_codigo'], 'Bronce'),
@@ -522,7 +606,7 @@ def proveedor_dashboard_view(request):
     context = {
         'comerciante': current_logged_in_user,
         'propuestas': propuestas,
-        'rol_display': ROLES_DISPLAY.get(current_logged_in_user.rol, 'Proveedor'), # <-- MODIFIED
+        'rol_display': ROLES_DISPLAY.get(current_logged_in_user.rol, 'Proveedor'),
     }
     
     return render(request, 'usuarios/proveedor_dashboard.html', context)

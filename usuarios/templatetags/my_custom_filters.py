@@ -1,4 +1,5 @@
 from django import template
+from django.utils.safestring import mark_safe # <-- Necesario si fuera a inyectar HTML, pero lo usaremos para lógica.
 
 register = template.Library()
 
@@ -33,3 +34,23 @@ def trim(value):
     if isinstance(value, str):
         return value.strip()
     return value
+    
+@register.filter
+def first_word_to_icon(value):
+    """Convierte la primera palabra del tipo de notificación en un icono Material Symbols."""
+    if not isinstance(value, str):
+        return 'notifications_active'
+        
+    first_word = value.split()[0].lower()
+    
+    # Mapeo basado en tus categorías:
+    if 'beneficio' in first_word or 'puntos' in first_word:
+        return 'redeem'
+    elif 'invitación' in first_word:
+        return 'event'
+    elif 'contenido' in first_word or 'sociales' in first_word:
+        return 'videocam'
+    elif 'reunión' in first_word or 'reunion' in first_word:
+        return 'groups'
+    else:
+        return 'notifications_active' # Ícono por defecto
