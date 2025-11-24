@@ -130,11 +130,19 @@ def registro_view(request):
     return render(request, 'usuarios/cuenta.html', {'form': form})
 
 
+# usuarios/views.py
+
 def login_view(request):
     global current_logged_in_user
-
+    
+    # Siempre creamos el form, independiente del método
     if request.method == 'POST':
         form = LoginForm(request.POST)
+    else:
+        form = LoginForm()
+        current_logged_in_user = None
+
+    if request.method == 'POST':
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
@@ -145,39 +153,37 @@ def login_view(request):
                 if check_password(password, comerciante.password_hash):
                     progreso = calcular_nivel_y_progreso(comerciante.puntos)
                     comerciante.nivel_actual = progreso['nivel_codigo']
+                    
                     comerciante.ultima_conexion = timezone.now()
-                    comerciante.save(update_fields=['ultima_conexion', 'nivel_actual'])
-
+                    comerciante.save(update_fields=['ultima_conexion', 'nivel_actual']) 
+                    
                     current_logged_in_user = comerciante
+                    
+                    messages.success(request, f'¡Bienvenido {comerciante.nombre_apellido}!')
 
-                    messages.success(
-                        request,
-                        f'¡Bienvenido {comerciante.nombre_apellido}!'
-                    )
-
-                    # Redirección según rol
+                    # 1) Admin
                     if comerciante.rol == 'ADMIN':
                         return redirect('panel_admin')
-                    elif comerciante.es_proveedor:
+
+                    # 2) Proveedor
+                    if getattr(comerciante, 'es_proveedor', False):
                         return redirect('proveedor_dashboard')
-                    else:
-                        return redirect('plataforma_comerciante')
+
+                    # 3) Comerciante normal
+                    return redirect('plataforma_comerciante')
+
                 else:
                     messages.error(request, 'Contraseña incorrecta. Intenta nuevamente.')
 
             except Comerciante.DoesNotExist:
-                messages.error(
-                    request,
-                    'Este correo no está registrado. '
-                    'Por favor, regístrate primero.'
-                )
+                messages.error(request, 'Este correo no está registrado. Por favor, regístrate primero.')
         else:
             messages.error(request, 'Por favor, completa todos los campos correctamente.')
-    else:
-        form = LoginForm()
-        current_logged_in_user = None
 
-    return render(request, 'usuarios/cuenta.html', {'form': form})
+    # 👇 AQUÍ definimos SIEMPRE el contexto
+    contexto = {'form': form}
+    return render(request, 'usuarios/cuenta.html', contexto)
+
 
 
 def logout_view(request):
@@ -595,30 +601,24 @@ def solicitar_rol_proveedor_view(request):
 def proveedor_dashboard_view(request):
     global current_logged_in_user
 
-    if not current_logged_in_user or not current_logged_in_user.es_proveedor:
-        messages.warning(
-            request,
-            'Acceso denegado. Esta interfaz es solo para Proveedores activos.'
-        )
+    if not current_logged_in_user or not getattr(current_logged_in_user, 'es_proveedor', False):
+        messages.warning(request, 'Acceso denegado. Esta interfaz es solo para Proveedores activos.')
         return redirect('perfil')
+    
+    from proveedor.models import Proveedor  # importante: importar del app proveedor
 
     try:
-        proveedor_qs = Proveedor.objects.get(
-            nombre=current_logged_in_user.nombre_negocio
-        )
-        propuestas = Propuesta.objects.filter(
-            proveedor=proveedor_qs
-        ).order_by('-id')
+        proveedor_qs = Proveedor.objects.get(usuario=current_logged_in_user)
     except Proveedor.DoesNotExist:
-        propuestas = []
+        proveedor_qs = None
 
     context = {
         'comerciante': current_logged_in_user,
-        'propuestas': propuestas,
-        'rol_display': ROLES.get('PROVEEDOR', 'Proveedor'),
+        'proveedor': proveedor_qs,
     }
 
-    return render(request, 'usuarios/proveedor_dashboard.html', context)
+    # 🔴 AQUÍ estaba el problema: nombre de template
+    return render(request, 'proveedores/perfil.html', context)
 
 
 # --- Directorio de proveedores ---

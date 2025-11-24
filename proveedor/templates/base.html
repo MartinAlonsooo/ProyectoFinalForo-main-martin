@@ -353,25 +353,6 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <script>
-        // ========== CARGAR MODO OSCURO DESDE DJANGO ==========
-        {% if user.is_authenticated %}
-            {% if user.proveedor.modo_oscuro %}
-                // Si el usuario tiene modo oscuro activado en BD, aplicarlo
-                document.body.classList.add('dark-mode');
-                localStorage.setItem('darkMode', 'true');
-            {% else %}
-                // Si está desactivado en BD, removerlo
-                document.body.classList.remove('dark-mode');
-                localStorage.setItem('darkMode', 'false');
-            {% endif %}
-        {% else %}
-            // Si no está autenticado, usar localStorage como fallback
-            if (localStorage.getItem('darkMode') === 'true') {
-                document.body.classList.add('dark-mode');
-            }
-        {% endif %}
-    </script>
 
     <header class="header">
         <div class="header-content">

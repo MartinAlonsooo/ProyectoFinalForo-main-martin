@@ -93,6 +93,7 @@ class Comerciante(models.Model):
     ROLES_CHOICES = [
         ('COMERCIANTE', 'Comerciante'),
         ('ADMIN', 'Administrador'),
+        ('PROVEEDOR', 'Proveedor'),
     ]
 
     # Autenticación y contacto
