@@ -1,12 +1,8 @@
-# usuarios/models.py (CÓDIGO COMPLETO CORREGIDO)
-
 from django.db import models
 from django.core.validators import RegexValidator
 from django.utils import timezone
 from django.conf import settings
-from django.templatetags.static import static 
-from django.contrib.auth.models import User 
-from datetime import timedelta 
+from django.templatetags.static import static
 
 # --- Opciones de Selección Múltiple ---
 
@@ -51,13 +47,14 @@ INTERESTS_CHOICES = [
 
 # Categorías para publicaciones del foro
 CATEGORIA_POST_CHOICES = [
-    ('NOTICIAS_CA', 'Noticias Club Almacén'),
-    ('DESPACHOS', 'Despachos realizados'),
-    ('NUEVOS_SOCIOS', 'Nuevos socios'),
-    ('ACTIVIDADES', 'Actividades'),
+    ('DUDA', 'Duda / Pregunta'),
+    ('OPINION', 'Opinión / Debate'),
+    ('RECOMENDACION', 'Recomendación'),
+    ('NOTICIA', 'Noticia del Sector'),
+    ('GENERAL', 'General'),
 ]
 
-# Definición de CATEGORIAS para Beneficio
+# Categorías para beneficios
 CATEGORIAS = [
     ('DESCUENTO', 'Descuento y Ofertas'),
     ('SORTEO', 'Sorteos y Rifas'),
@@ -69,10 +66,10 @@ CATEGORIAS = [
 ESTADO_BENEFICIO = [
     ('ACTIVO', 'Activo'),
     ('TERMINADO', 'Terminado'),
-    ('BENEFICIO_ACTIVO', 'Beneficio Reclamado'), 
+    ('BENEFICIO_ACTIVO', 'Beneficio Reclamado'),
 ]
 
-# Definición de Niveles (Sistema de 100 puntos)
+# Niveles del sistema de puntos
 NIVELES = [
     ('BRONCE', 'Bronce'),
     ('PLATA', 'Plata'),
@@ -91,57 +88,70 @@ RUBROS_CHOICES = [
     ('VARIOS', 'Varios'),
 ]
 
-# Definición de Roles de Usuario
-ROLES_CHOICES = [
-    ('COMERCIANTE', 'Comerciante'),
-    ('PROVEEDOR', 'Proveedor'),
-    ('ADMIN', 'Administrador'),
-]
-
-
-# --- MODELO PRINCIPAL DE COMERCIANTE ---
 
 class Comerciante(models.Model):
+    ROLES_CHOICES = [
+        ('COMERCIANTE', 'Comerciante'),
+        ('ADMIN', 'Administrador'),
+    ]
+
+    # Autenticación y contacto
     nombre_apellido = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    password_hash = models.CharField(max_length=128) 
-    
+    password_hash = models.CharField(max_length=128)
+
+    rol = models.CharField(
+        max_length=20,
+        choices=ROLES_CHOICES,
+        default='COMERCIANTE',
+        help_text="Define si este usuario es comerciante o administrador del sistema."
+    )
+
     whatsapp_validator = RegexValidator(
-        regex=r'^\+569\d{8}$', 
+        regex=r'^\+569\d{8}$',
         message="El formato debe ser '+569XXXXXXXX'."
     )
     whatsapp = models.CharField(
-        validators=[whatsapp_validator], 
-        max_length=12, 
-        blank=True, 
+        validators=[whatsapp_validator],
+        max_length=12,
+        blank=True,
         null=True,
         help_text="Formato: +569XXXXXXXX"
     )
 
+    # Negocio
     relacion_negocio = models.CharField(max_length=10, choices=RELACION_NEGOCIO_CHOICES)
     tipo_negocio = models.CharField(max_length=20, choices=TIPO_NEGOCIO_CHOICES)
-    comuna = models.CharField(max_length=50) 
+    comuna = models.CharField(max_length=50)
     nombre_negocio = models.CharField(max_length=100, default='Mi Negocio Local', blank=True)
+
+    # Auditoría
     fecha_registro = models.DateTimeField(auto_now_add=True)
     ultima_conexion = models.DateTimeField(default=timezone.now)
 
+    # Perfil
     foto_perfil = models.ImageField(
-        upload_to='perfiles/', 
-        default='usuarios/img/default_profile.png', 
-        blank=True, 
+        upload_to='perfiles/',
+        default='usuarios/img/default_profile.png',
+        blank=True,
         null=True
     )
     intereses = models.CharField(
-        max_length=512, 
-        default='', 
-        blank=True, 
+        max_length=512,
+        default='',
+        blank=True,
         help_text="Códigos de intereses separados por coma."
     )
-    
-    # --- CAMPOS DE PUNTOS Y ROLES ---
+
+    # Puntos y niveles
     puntos = models.IntegerField(default=0, verbose_name='Puntos Acumulados')
-    nivel_actual = models.CharField(max_length=50, choices=NIVELES, default='BRONCE', verbose_name='Nivel de Beneficios')
-    rol = models.CharField(max_length=15, choices=ROLES_CHOICES, default='COMERCIANTE', verbose_name='Rol de Usuario') 
+    nivel_actual = models.CharField(
+        max_length=50,
+        choices=NIVELES,
+        default='BRONCE',
+        verbose_name='Nivel de Beneficios'
+    )
+
     es_proveedor = models.BooleanField(default=False, verbose_name='Es Proveedor')
 
     class Meta:
@@ -153,15 +163,12 @@ class Comerciante(models.Model):
 
     def get_profile_picture_url(self):
         DEFAULT_IMAGE_PATH = 'usuarios/img/default_profile.png'
-        if self.foto_perfil.name and self.foto_perfil.name != DEFAULT_IMAGE_PATH:
+        if self.foto_perfil and self.foto_perfil.name and self.foto_perfil.name != DEFAULT_IMAGE_PATH:
             return self.foto_perfil.url
         return static('img/default_profile.png')
 
 
-# --- MODELOS DE FORO (Post, Comentario, Like) ---
-
 class Post(models.Model):
-    """Modelo que representa una publicación en el foro."""
     comerciante = models.ForeignKey(
         Comerciante,
         on_delete=models.CASCADE,
@@ -170,11 +177,28 @@ class Post(models.Model):
     )
     titulo = models.CharField(max_length=200, verbose_name='Título de la Publicación')
     contenido = models.TextField(verbose_name='Contenido del Post')
-    categoria = models.CharField(max_length=50, choices=CATEGORIA_POST_CHOICES, default='NOTICIAS_CA', verbose_name='Categoría') 
-    imagen_url = models.URLField(max_length=200, blank=True, null=True, verbose_name='URL de Imagen/Link de Archivo Subido')
-    etiquetas = models.CharField(max_length=255, blank=True, verbose_name='Etiquetas (@usuarios, hashtags)')
-    fecha_publicacion = models.DateTimeField(default=timezone.now, verbose_name='Fecha de Publicación')
-    
+    categoria = models.CharField(
+        max_length=50,
+        choices=CATEGORIA_POST_CHOICES,
+        default='GENERAL',
+        verbose_name='Categoría'
+    )
+    imagen_url = models.URLField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name='URL de Imagen/Link de Archivo Subido'
+    )
+    etiquetas = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='Etiquetas (@usuarios, hashtags)'
+    )
+    fecha_publicacion = models.DateTimeField(
+        default=timezone.now,
+        verbose_name='Fecha de Publicación'
+    )
+
     class Meta:
         verbose_name = 'Publicación de Foro'
         verbose_name_plural = 'Publicaciones de Foro'
@@ -183,26 +207,27 @@ class Post(models.Model):
     def __str__(self):
         return f"[{self.get_categoria_display()}] {self.titulo} por {self.comerciante.nombre_apellido}"
 
+
 class Comentario(models.Model):
     post = models.ForeignKey(
-        Post, 
-        on_delete=models.CASCADE, 
-        related_name='comentarios', 
+        Post,
+        on_delete=models.CASCADE,
+        related_name='comentarios',
         verbose_name='Publicación'
     )
     comerciante = models.ForeignKey(
-        'Comerciante', 
-        on_delete=models.CASCADE, 
-        related_name='comentarios_dados', 
+        Comerciante,
+        on_delete=models.CASCADE,
+        related_name='comentarios_dados',
         verbose_name='Autor'
     )
     contenido = models.TextField(verbose_name='Comentario')
     fecha_creacion = models.DateTimeField(default=timezone.now, verbose_name='Fecha de Creación')
-    
+
     class Meta:
         verbose_name = 'Comentario'
         verbose_name_plural = 'Comentarios'
-        ordering = ['-fecha_creacion'] 
+        ordering = ['-fecha_creacion']
 
     def __str__(self):
         return f"Comentario de {self.comerciante.nombre_apellido} en {self.post.titulo[:20]}"
@@ -210,18 +235,18 @@ class Comentario(models.Model):
 
 class Like(models.Model):
     post = models.ForeignKey(
-        Post, 
-        on_delete=models.CASCADE, 
-        related_name='likes', 
+        Post,
+        on_delete=models.CASCADE,
+        related_name='likes',
         verbose_name='Publicación'
     )
     comerciante = models.ForeignKey(
-        'Comerciante', 
-        on_delete=models.CASCADE, 
-        related_name='likes_dados', 
+        Comerciante,
+        on_delete=models.CASCADE,
+        related_name='likes_dados',
         verbose_name='Comerciante'
     )
-    
+
     class Meta:
         unique_together = ('post', 'comerciante')
         verbose_name = 'Like'
@@ -231,24 +256,37 @@ class Like(models.Model):
         return f"Like de {self.comerciante.nombre_apellido} a {self.post.titulo[:20]}"
 
 
-# --- MODELO BENEFICIO ---
 class Beneficio(models.Model):
     titulo = models.CharField(max_length=200, verbose_name="Título del Beneficio")
     descripcion = models.TextField(verbose_name="Descripción")
-    foto = models.ImageField(upload_to='beneficios_fotos/', null=True, blank=True, verbose_name="Imagen") 
-    vence = models.DateField(null=True, blank=True, verbose_name="Fecha de Vencimiento") 
-    categoria = models.CharField(max_length=50, choices=CATEGORIAS, default='DESCUENTO', verbose_name="Categoría") 
+    foto = models.ImageField(
+        upload_to='beneficios_fotos/',
+        null=True,
+        blank=True,
+        verbose_name="Imagen"
+    )
+    vence = models.DateField(null=True, blank=True, verbose_name="Fecha de Vencimiento")
+    categoria = models.CharField(
+        max_length=50,
+        choices=CATEGORIAS,
+        default='DESCUENTO',
+        verbose_name="Categoría"
+    )
     puntos_requeridos = models.IntegerField(default=0, verbose_name="Puntos Requeridos")
-    estado = models.CharField(max_length=30, choices=ESTADO_BENEFICIO, default='ACTIVO')
+    estado = models.CharField(
+        max_length=30,
+        choices=ESTADO_BENEFICIO,
+        default='ACTIVO'
+    )
     creado_por = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL, 
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         verbose_name='Subido por'
     )
     fecha_creacion = models.DateTimeField(default=timezone.now)
-    
+
     class Meta:
         verbose_name = 'Beneficio y Promoción'
         verbose_name_plural = 'Beneficios y Promociones'
@@ -258,6 +296,51 @@ class Beneficio(models.Model):
         return f"[{self.get_categoria_display()}] {self.titulo}"
 
 
-# 🚨 SE HAN ELIMINADO los modelos Proveedor y Propuesta 
-# 🚨 para usar la aplicación 'proveedores' 
-# 🚨 Ahora debes ejecutar las migraciones.
+class Proveedor(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(max_length=500, blank=True)
+    foto_perfil = models.ImageField(upload_to='proveedores/fotos/', null=True, blank=True)
+    email_contacto = models.EmailField(blank=True, null=True)
+    whatsapp_contacto = models.CharField(
+        max_length=12,
+        blank=True,
+        null=True,
+        help_text="Formato: +569XXXXXXXX"
+    )
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+    ultima_conexion = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        verbose_name = 'Proveedor'
+        verbose_name_plural = 'Proveedores'
+
+    def __str__(self):
+        return self.nombre
+
+    def get_profile_picture_url(self):
+        DEFAULT_IMAGE_PATH = 'usuarios/img/default_profile.png'
+        if self.foto_perfil and self.foto_perfil.name and self.foto_perfil.name != DEFAULT_IMAGE_PATH:
+            return self.foto_perfil.url
+        return static('img/default_profile.png')
+
+
+class Propuesta(models.Model):
+    proveedor = models.ForeignKey(
+        Proveedor,
+        on_delete=models.CASCADE,
+        related_name='propuestas'
+    )
+    titulo = models.CharField(max_length=100)
+    rubros_ofertados = models.CharField(
+        max_length=255,
+        verbose_name='Rubros Ofertados',
+        help_text='Separados por coma'
+    )
+    zona_geografica = models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name = "Propuesta de Proveedor"
+        verbose_name_plural = "Propuestas de Proveedores"
+
+    def __str__(self):
+        return f"{self.titulo} - {self.proveedor.nombre}"
