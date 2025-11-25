@@ -7,6 +7,9 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.utils import timezone
+from usuarios import views as usuarios_views   # para current_logged_in_user
+from usuarios.models import Comerciante
+
 from .models import (
     Proveedor, 
     SolicitudContacto, 
@@ -131,28 +134,27 @@ def detalle_proveedor(request, proveedor_id):
 def perfil_proveedor(request):
     """
     Vista del panel de control del proveedor.
-    Soluciona el AttributeError redirigiendo a la creación si el perfil no existe.
+    Ahora usa el Comerciante guardado en usuarios_views.current_logged_in_user
+    en vez de request.user.proveedor.
     """
-    
-    comerciante = request.user 
-    
+    comerciante = usuarios_views.current_logged_in_user
+
+    if not comerciante:
+        messages.error(request, "Debes iniciar sesión como comerciante.")
+        return redirect('login')
+
     try:
-        # Intenta acceder al perfil de Proveedor. Si no existe, lanza Proveedor.DoesNotExist
-        proveedor = comerciante.proveedor
-        
+        proveedor = Proveedor.objects.get(usuario=comerciante)
     except Proveedor.DoesNotExist:
-        # 🚨 SOLUCIÓN: Redirigir a creación si el perfil no existe.
-        messages.warning(request, 'Aún no tienes un perfil de proveedor. Por favor, créalo para acceder al panel.')
+        messages.warning(
+            request,
+            "Aún no tienes un perfil de proveedor. Créalo para acceder al panel."
+        )
         return redirect('proveedores:crear_perfil_proveedor')
-    
-    # ----------------------------------------------------
-    # LÓGICA DE ESTADÍSTICAS (Solo si el perfil existe)
-    # ----------------------------------------------------
-    
-    # Total de productos y servicios
+
+    # Estadísticas
     total_productos = ProductoServicio.objects.filter(proveedor=proveedor).count()
-    
-    # Promociones activas (usando el proveedor encontrado)
+
     hoy = timezone.now().date()
     promociones_activas = Promocion.objects.filter(
         proveedor=proveedor,
@@ -160,49 +162,68 @@ def perfil_proveedor(request):
         fecha_inicio__lte=hoy,
         fecha_fin__gte=hoy
     ).count()
-    
-    # Solicitudes de contacto pendientes
+
     solicitudes_pendientes = SolicitudContacto.objects.filter(
         proveedor=proveedor,
         estado='pendiente'
     ).count()
-    
+
     context = {
         'proveedor': proveedor,
         'total_productos': total_productos,
         'promociones_activas': promociones_activas,
         'solicitudes_pendientes': solicitudes_pendientes,
     }
-    
     return render(request, 'proveedores/perfil.html', context)
+
 
 
 @login_required
 def crear_perfil_proveedor(request):
     """
-    Vista para crear el perfil de proveedor
+    Vista para crear el perfil de proveedor,
+    ligada al Comerciante (no al User de Django).
     """
-    # Verificar si ya tiene perfil (evita crear duplicados)
-    if hasattr(request.user, 'proveedor'):
-        messages.info(request, 'Ya tienes un perfil de proveedor.')
+    comerciante = usuarios_views.current_logged_in_user
+
+    if not comerciante:
+        messages.error(request, "Debes iniciar sesión como comerciante.")
+        return redirect('login')
+
+    # Evita duplicar perfil
+    if Proveedor.objects.filter(usuario=comerciante).exists():
+        messages.info(request, "Ya tienes un perfil de proveedor.")
         return redirect('proveedores:perfil_proveedor')
-    
+
     if request.method == 'POST':
         form = ProveedorForm(request.POST, request.FILES)
         if form.is_valid():
             proveedor = form.save(commit=False)
-            proveedor.usuario = request.user # Asigna el Comerciante actual como usuario del Proveedor
-            proveedor.email = request.user.email
+            proveedor.usuario = comerciante
+            proveedor.email = comerciante.email
+            proveedor.whatsapp = proveedor.whatsapp or (comerciante.whatsapp or "")
             proveedor.save()
             form.save_m2m()
-            
-            messages.success(request, '¡Perfil de proveedor creado exitosamente! Ahora puedes gestionar tu negocio.')
+
+            # Si tienes el campo es_proveedor en Comerciante, márcalo:
+            if hasattr(comerciante, "es_proveedor"):
+                comerciante.es_proveedor = True
+                comerciante.save(update_fields=["es_proveedor"])
+
+            messages.success(
+                request,
+                "¡Perfil de proveedor creado exitosamente! Ahora puedes gestionar tu negocio."
+            )
             return redirect('proveedores:perfil_proveedor')
     else:
-        form = ProveedorForm()
-    
-    context = {'form': form}
-    return render(request, 'proveedores/crear_perfil.html', context)
+        # Puedes precargar algunos datos desde Comerciante
+        initial = {
+            "nombre_empresa": comerciante.nombre_negocio or comerciante.nombre_apellido,
+            "whatsapp": comerciante.whatsapp or "",
+        }
+        form = ProveedorForm(initial=initial)
+
+    return render(request, 'proveedores/crear_perfil.html', {'form': form})
 
 
 @login_required
@@ -210,22 +231,27 @@ def editar_perfil_proveedor(request):
     """
     Vista para editar el perfil del proveedor
     """
+    comerciante = usuarios_views.current_logged_in_user
+
+    if not comerciante:
+        messages.error(request, "Debes iniciar sesión como comerciante.")
+        return redirect('login')
+
     try:
-        proveedor = request.user.proveedor
+        proveedor = Proveedor.objects.get(usuario=comerciante)
     except Proveedor.DoesNotExist:
-        # 🚨 SOLUCIÓN: Capturar si no existe y redirigir a creación
-        messages.error(request, 'Debes crear primero un perfil de proveedor.')
+        messages.error(request, "Debes crear primero un perfil de proveedor.")
         return redirect('proveedores:crear_perfil_proveedor')
-    
+
     if request.method == 'POST':
         form = ProveedorForm(request.POST, request.FILES, instance=proveedor)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Perfil actualizado exitosamente.')
+            messages.success(request, "Perfil actualizado exitosamente.")
             return redirect('proveedores:perfil_proveedor')
     else:
         form = ProveedorForm(instance=proveedor)
-    
+
     context = {'form': form, 'proveedor': proveedor}
     return render(request, 'proveedores/editar_perfil.html', context)
 

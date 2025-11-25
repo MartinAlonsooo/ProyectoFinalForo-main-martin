@@ -21,29 +21,18 @@
 
 <div class="card shadow-sm border-0">
     <div class="card-body">
-        <div class="row g-2 mb-3">
-            <div class="col-md-4">
-                <form method="get" class="d-flex">
-                    <input type="text" name="q" class="form-control me-2" placeholder="Buscar por nombre o email..." value="{{ request.GET.q }}">
-                    <button class="btn btn-outline-primary" type="submit">
-                        <i class="bi bi-search"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
-
         <div class="table-responsive">
             <table class="table align-middle table-hover">
                 <thead class="table-light">
                     <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Nombre</th>
-                        <th scope="col">Email</th>
-                        <th scope="col">Comuna</th>
-                        <th scope="col">WhatsApp</th>
-                        <th scope="col">Rol</th>
-                        <th scope="col">F. Registro</th>
-                        <th scope="col" class="text-end">Acciones</th>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Comuna</th>
+                        <th>WhatsApp</th>
+                        <th>Rol</th>
+                        <th>F. Registro</th>
+                        <th class="text-end">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,13 +49,13 @@
                         <td>
                             {% if c.rol == "ADMIN" %}
                                 <span class="badge bg-danger">Admin</span>
+                            {% elif c.es_proveedor %}
+                                <span class="badge bg-warning text-dark">Proveedor</span>
                             {% else %}
                                 <span class="badge bg-secondary">Comerciante</span>
                             {% endif %}
                         </td>
-                        <td>
-                            <small>{{ c.fecha_registro|date:"d/m/Y H:i" }}</small>
-                        </td>
+                        <td><small>{{ c.fecha_registro|date:"d/m/Y H:i" }}</small></td>
                         <td class="text-end table-actions">
                             <a href="{% url 'editar_comerciante' c.id %}" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-pencil"></i>
@@ -86,7 +75,6 @@
                 </tbody>
             </table>
         </div>
-
     </div>
 </div>
 {% endblock %}

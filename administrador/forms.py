@@ -2,10 +2,10 @@
 
 from django import forms
 from django.contrib.auth.hashers import make_password
-from usuarios.models import Comerciante
+from usuarios.models import Comerciante, Beneficio, Post
+
 
 class ComercianteAdminForm(forms.ModelForm):
-
     raw_password = forms.CharField(
         required=False,
         label="Contraseña nueva",
@@ -22,25 +22,47 @@ class ComercianteAdminForm(forms.ModelForm):
             'tipo_negocio',
             'comuna',
             'nombre_negocio',
-            'rol',           # 👈 aquí aparecerá COMERCIANTE / PROVEEDOR / ADMIN
-            # ya NO necesitamos mostrar es_proveedor al admin
+            'rol',
+            'es_proveedor',      # 👈 importante para el flujo proveedor
         ]
 
     def save(self, commit=True):
         instance = super().save(commit=False)
 
-        # Si el admin escribe contraseña nueva → actualizar password_hash
         password = self.cleaned_data.get('raw_password')
         if password:
             instance.password_hash = make_password(password)
-
-        # Sincronizar campo es_proveedor con el rol
-        if instance.rol == 'PROVEEDOR':
-            instance.es_proveedor = True
-        else:
-            instance.es_proveedor = False
 
         if commit:
             instance.save()
 
         return instance
+
+
+# 🔹 FORMULARIO PARA BENEFICIOS
+class BeneficioAdminForm(forms.ModelForm):
+    class Meta:
+        model = Beneficio
+        fields = [
+            'titulo',
+            'descripcion',
+            'foto',
+            'vence',
+            'categoria',
+            'puntos_requeridos',
+            'estado',
+        ]
+
+
+# 🔹 FORMULARIO PARA POSTS
+class PostAdminForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = [
+            'titulo',
+            'contenido',
+            'categoria',
+            'imagen_url',
+            'etiquetas',
+            'comerciante',   # para asignar a qué comerciante pertenece
+        ]
