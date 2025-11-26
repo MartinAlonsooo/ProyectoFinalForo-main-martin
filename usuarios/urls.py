@@ -19,6 +19,7 @@ urlpatterns = [
     path('directorio/', views.directorio_view, name='directorio'),
     path('proveedor/<int:pk>/', views.proveedor_perfil_view, name='proveedor_perfil'),
     path('proveedor/dashboard/', views.proveedor_dashboard_view, name='proveedor_dashboard'),
+    path('soporte/ticket/nuevo/', views.crear_ticket_soporte, name='crear_ticket_soporte'),
 
     # 👇 ESTA ES LA RUTA QUE FALTABA
     path(

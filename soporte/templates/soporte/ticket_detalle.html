@@ -1,0 +1,135 @@
+{# soporte/templates/soporte/ticket_detalle.html #}
+{% extends "soporte/base_soporte.html" %}
+
+{% block title %}Detalle Ticket #{{ ticket.id }}{% endblock %}
+{% block nav_panel_active %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3">
+    <div>
+        <h2 class="h4 mb-1">Ticket #{{ ticket.id }} - {{ ticket.titulo }}</h2>
+        <p class="text-muted mb-0">
+            Creado por {{ ticket.comerciante.nombre_apellido }} ({{ ticket.comerciante.email }})
+        </p>
+    </div>
+    <div>
+        {% if ticket.estado != 'cerrado' %}
+            <a href="{% url 'cerrar_ticket' ticket.id %}" 
+               class="btn btn-outline-danger btn-sm"
+               onclick="return confirm('¿Cerrar este ticket?');">
+                <i class="bi bi-x-circle"></i> Cerrar ticket
+            </a>
+        {% endif %}
+        <a href="{% url 'soporte_panel' %}" class="btn btn-secondary btn-sm ms-1">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Info ticket -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Información del ticket</h5>
+                <p class="mb-2">
+                    <strong>Estado:</strong>
+                    {% if ticket.estado == 'abierto' %}
+                        <span class="badge bg-primary">Abierto</span>
+                    {% elif ticket.estado == 'en_proceso' %}
+                        <span class="badge bg-warning text-dark">En proceso</span>
+                    {% elif ticket.estado == 'resuelto' %}
+                        <span class="badge bg-success">Resuelto</span>
+                    {% elif ticket.estado == 'cerrado' %}
+                        <span class="badge bg-secondary">Cerrado</span>
+                    {% endif %}
+                </p>
+                <p class="mb-2">
+                    <strong>Prioridad:</strong>
+                    {% if ticket.prioridad == 'baja' %}
+                        <span class="badge bg-success">Baja</span>
+                    {% elif ticket.prioridad == 'media' %}
+                        <span class="badge bg-info text-dark">Media</span>
+                    {% elif ticket.prioridad == 'alta' %}
+                        <span class="badge bg-warning text-dark">Alta</span>
+                    {% elif ticket.prioridad == 'critica' %}
+                        <span class="badge bg-danger">Crítica</span>
+                    {% endif %}
+                </p>
+                <p class="mb-2">
+                    <strong>Fecha de creación:</strong> 
+                    {{ ticket.fecha_creacion|date:"d/m/Y H:i" }}<br>
+                    <strong>Última actualización:</strong> 
+                    {{ ticket.fecha_actualizacion|date:"d/m/Y H:i" }}
+                </p>
+                <p class="mb-0">
+                    <strong>Descripción:</strong><br>
+                    {{ ticket.descripcion|linebreaks }}
+                </p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Responder ticket</h5>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.mensaje.label_tag }}
+                        {{ form.mensaje }}
+                        {% if form.mensaje.errors %}
+                            <div class="text-danger small">
+                                {{ form.mensaje.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send"></i> Enviar respuesta
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de respuestas -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Historial de respuestas</h5>
+
+                {% if ticket.respuestas.all %}
+                    <div class="list-group list-group-flush">
+                        {% for r in ticket.respuestas.all %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <strong>
+                                        {% if r.autor %}
+                                            {{ r.autor.nombre_apellido }}
+                                        {% else %}
+                                            Usuario eliminado
+                                        {% endif %}
+                                    </strong>
+                                    <small class="text-muted">
+                                        {{ r.fecha|date:"d/m/Y H:i" }}
+                                    </small>
+                                </div>
+                                <p class="mb-0 mt-1">
+                                    {{ r.mensaje|linebreaks }}
+                                </p>
+                            </div>
+                        {% empty %}
+                            <p class="text-muted mb-0">
+                                Aún no hay respuestas en este ticket.
+                            </p>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">
+                        Aún no hay respuestas en este ticket.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

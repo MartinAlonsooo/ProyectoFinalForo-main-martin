@@ -132,17 +132,23 @@ def registro_view(request):
 
 # usuarios/views.py
 
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.utils import timezone
+from django.contrib.auth.hashers import check_password
+
+from .forms import LoginForm
+from .models import Comerciante
+   # si lo tienes en utils
+
+current_logged_in_user = None  # asegúrate de tener esto definido arriba
+
+
 def login_view(request):
     global current_logged_in_user
     
-    # Siempre creamos el form, independiente del método
     if request.method == 'POST':
         form = LoginForm(request.POST)
-    else:
-        form = LoginForm()
-        current_logged_in_user = None
-
-    if request.method == 'POST':
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
@@ -151,25 +157,30 @@ def login_view(request):
                 comerciante = Comerciante.objects.get(email=email)
 
                 if check_password(password, comerciante.password_hash):
+                    # Actualizar nivel y última conexión
                     progreso = calcular_nivel_y_progreso(comerciante.puntos)
                     comerciante.nivel_actual = progreso['nivel_codigo']
-                    
                     comerciante.ultima_conexion = timezone.now()
                     comerciante.save(update_fields=['ultima_conexion', 'nivel_actual']) 
                     
+                    # Guardamos en la variable global usada en admin/soporte
                     current_logged_in_user = comerciante
                     
                     messages.success(request, f'¡Bienvenido {comerciante.nombre_apellido}!')
 
-                    # 1) Admin
+                    # 🔹 1. Si es ADMIN → panel admin
                     if comerciante.rol == 'ADMIN':
                         return redirect('panel_admin')
 
-                    # 2) Proveedor
+                    # 🔹 2. Si es TÉCNICO → panel de soporte
+                    if comerciante.rol == 'TECNICO':
+                        return redirect('soporte_panel')
+
+                    # 🔹 3. Si es proveedor → panel proveedor
                     if getattr(comerciante, 'es_proveedor', False):
                         return redirect('proveedor_dashboard')
 
-                    # 3) Comerciante normal
+                    # 🔹 4. Si no, plataforma normal
                     return redirect('plataforma_comerciante')
 
                 else:
@@ -179,8 +190,10 @@ def login_view(request):
                 messages.error(request, 'Este correo no está registrado. Por favor, regístrate primero.')
         else:
             messages.error(request, 'Por favor, completa todos los campos correctamente.')
+    else:
+        form = LoginForm()
+        current_logged_in_user = None 
 
-    # 👇 AQUÍ definimos SIEMPRE el contexto
     contexto = {'form': form}
     return render(request, 'usuarios/cuenta.html', contexto)
 
@@ -803,3 +816,38 @@ def proveedor_perfil_view(request, pk):
     }
 
     return render(request, 'usuarios/proveedor_perfil.html', context)
+
+# al inicio del archivo ya debes tener:
+from django.contrib import messages
+from soporte.forms import TicketSoporteForm
+
+# ...
+
+def crear_ticket_soporte(request):
+    """
+    Vista para que un COMERCIANTE cree un ticket de soporte.
+    Usa current_logged_in_user (no Django auth).
+    """
+    from .views import current_logged_in_user  # si ya estás en este archivo, NO repitas esto
+
+    comerciante = current_logged_in_user
+    if not comerciante:
+        messages.error(request, "Debes iniciar sesión para crear un ticket de soporte.")
+        return redirect('login')
+
+    if request.method == 'POST':
+        form = TicketSoporteForm(request.POST)
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.comerciante = comerciante
+            ticket.save()
+            messages.success(request, "Tu ticket de soporte fue enviado correctamente. El equipo técnico lo revisará.")
+            return redirect('plataforma_comerciante')
+    else:
+        form = TicketSoporteForm()
+
+    contexto = {
+        'form': form,
+        'comerciante': comerciante,
+    }
+    return render(request, 'usuarios/soporte/crear_ticket.html', contexto)

@@ -13,7 +13,7 @@ urlpatterns = [
     path('', include('usuarios.urls')),
     path('administrador/', include('administrador.urls')),
     path('proveedores/', include('proveedor.urls', namespace='proveedores')),
-
+    path('soporte/', include('soporte.urls')),
 ]
 
 if settings.DEBUG:

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'usuarios',
     'proveedor',
     'administrador',
+    'soporte',
 
 ]
 

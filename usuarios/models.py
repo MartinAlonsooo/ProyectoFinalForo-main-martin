@@ -94,6 +94,7 @@ class Comerciante(models.Model):
         ('COMERCIANTE', 'Comerciante'),
         ('ADMIN', 'Administrador'),
         ('PROVEEDOR', 'Proveedor'),
+        ('TECNICO', 'Técnico de soporte'),
     ]
 
     # Autenticación y contacto
