@@ -21,12 +21,11 @@
                 <thead class="table-light">
                     <tr>
                         <th>ID</th>
-                        <th>Título</th>
+                        <th>Asunto</th>
                         <th>Comerciante</th>
                         <th>Prioridad</th>
                         <th>Estado</th>
-                        <th>Fecha creación</th>
-                        <th>Técnico</th>
+                        <th>Creado en</th>
                         <th class="text-end">Acciones</th>
                     </tr>
                 </thead>
@@ -35,7 +34,7 @@
                     <tr>
                         <td>#{{ t.id }}</td>
                         <td>
-                            <strong>{{ t.titulo }}</strong><br>
+                            <strong>{{ t.asunto }}</strong><br>
                             <small class="text-muted">
                                 {{ t.descripcion|truncatechars:60 }}
                             </small>
@@ -45,47 +44,40 @@
                             <small class="text-muted">{{ t.comerciante.email }}</small>
                         </td>
                         <td>
-                            {% if t.prioridad == 'baja' %}
+                            {% if t.prioridad == 'BAJA' %}
                                 <span class="badge bg-success">Baja</span>
-                            {% elif t.prioridad == 'media' %}
+                            {% elif t.prioridad == 'MEDIA' %}
                                 <span class="badge bg-info text-dark">Media</span>
-                            {% elif t.prioridad == 'alta' %}
+                            {% elif t.prioridad == 'ALTA' %}
                                 <span class="badge bg-warning text-dark">Alta</span>
-                            {% elif t.prioridad == 'critica' %}
+                            {% elif t.prioridad == 'CRITICA' %}
                                 <span class="badge bg-danger">Crítica</span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if t.estado == 'abierto' %}
+                            {% if t.estado == 'ABIERTO' %}
                                 <span class="badge bg-primary">Abierto</span>
-                            {% elif t.estado == 'en_proceso' %}
+                            {% elif t.estado == 'EN_PROCESO' %}
                                 <span class="badge bg-warning text-dark">En proceso</span>
-                            {% elif t.estado == 'resuelto' %}
+                            {% elif t.estado == 'RESUELTO' %}
                                 <span class="badge bg-success">Resuelto</span>
-                            {% elif t.estado == 'cerrado' %}
+                            {% elif t.estado == 'CERRADO' %}
                                 <span class="badge bg-secondary">Cerrado</span>
                             {% endif %}
                         </td>
                         <td>
-                            <small>{{ t.fecha_creacion|date:"d/m/Y H:i" }}</small>
-                        </td>
-                        <td>
-                            {% if t.tecnico_asignado %}
-                                <small>{{ t.tecnico_asignado.nombre_apellido }}</small>
-                            {% else %}
-                                <small class="text-muted">Sin asignar</small>
-                            {% endif %}
+                            <small>{{ t.creado_en|date:"d/m/Y H:i" }}</small>
                         </td>
                         <td class="text-end table-actions">
-                            <a href="{% url 'soporte_ticket_detalle' t.id %}" 
-                               class="btn btn-sm btn-outline-primary">
+                            <a href="{% url 'soporte:ticket_detalle' t.id %}" 
+                            class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-eye"></i> Ver
                             </a>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-4">
+                        <td colspan="7" class="text-center text-muted py-4">
                             No hay tickets de soporte aún.
                         </td>
                     </tr>

@@ -174,7 +174,8 @@ def login_view(request):
 
                     # 🔹 2. Si es TÉCNICO → panel de soporte
                     if comerciante.rol == 'TECNICO':
-                        return redirect('soporte_panel')
+                        return redirect('soporte:panel_soporte')
+
 
                     # 🔹 3. Si es proveedor → panel proveedor
                     if getattr(comerciante, 'es_proveedor', False):

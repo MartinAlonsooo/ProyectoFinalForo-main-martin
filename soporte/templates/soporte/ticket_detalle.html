@@ -7,20 +7,22 @@
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3">
     <div>
-        <h2 class="h4 mb-1">Ticket #{{ ticket.id }} - {{ ticket.titulo }}</h2>
+        <h2 class="h4 mb-1">Ticket #{{ ticket.id }} - {{ ticket.asunto }}</h2>
         <p class="text-muted mb-0">
             Creado por {{ ticket.comerciante.nombre_apellido }} ({{ ticket.comerciante.email }})
         </p>
     </div>
-    <div>
-        {% if ticket.estado != 'cerrado' %}
-            <a href="{% url 'cerrar_ticket' ticket.id %}" 
-               class="btn btn-outline-danger btn-sm"
-               onclick="return confirm('¿Cerrar este ticket?');">
-                <i class="bi bi-x-circle"></i> Cerrar ticket
-            </a>
+    <div class="text-end">
+        {% if ticket.estado != 'CERRADO' %}
+            <form method="post" action="{% url 'soporte:cerrar_ticket' ticket.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm"
+                        onclick="return confirm('¿Cerrar este ticket?');">
+                    <i class="bi bi-x-circle"></i> Cerrar ticket
+                </button>
+            </form>
         {% endif %}
-        <a href="{% url 'soporte_panel' %}" class="btn btn-secondary btn-sm ms-1">
+        <a href="{% url 'soporte:panel_soporte' %}" class="btn btn-secondary btn-sm ms-1">
             <i class="bi bi-arrow-left"></i> Volver
         </a>
     </div>
@@ -32,36 +34,40 @@
         <div class="card shadow-sm border-0 mb-3">
             <div class="card-body">
                 <h5 class="card-title">Información del ticket</h5>
+
                 <p class="mb-2">
                     <strong>Estado:</strong>
-                    {% if ticket.estado == 'abierto' %}
+                    {% if ticket.estado == 'ABIERTO' %}
                         <span class="badge bg-primary">Abierto</span>
-                    {% elif ticket.estado == 'en_proceso' %}
+                    {% elif ticket.estado == 'EN_PROCESO' %}
                         <span class="badge bg-warning text-dark">En proceso</span>
-                    {% elif ticket.estado == 'resuelto' %}
+                    {% elif ticket.estado == 'RESUELTO' %}
                         <span class="badge bg-success">Resuelto</span>
-                    {% elif ticket.estado == 'cerrado' %}
+                    {% elif ticket.estado == 'CERRADO' %}
                         <span class="badge bg-secondary">Cerrado</span>
                     {% endif %}
                 </p>
+
                 <p class="mb-2">
                     <strong>Prioridad:</strong>
-                    {% if ticket.prioridad == 'baja' %}
+                    {% if ticket.prioridad == 'BAJA' %}
                         <span class="badge bg-success">Baja</span>
-                    {% elif ticket.prioridad == 'media' %}
+                    {% elif ticket.prioridad == 'MEDIA' %}
                         <span class="badge bg-info text-dark">Media</span>
-                    {% elif ticket.prioridad == 'alta' %}
+                    {% elif ticket.prioridad == 'ALTA' %}
                         <span class="badge bg-warning text-dark">Alta</span>
-                    {% elif ticket.prioridad == 'critica' %}
+                    {% elif ticket.prioridad == 'CRITICA' %}
                         <span class="badge bg-danger">Crítica</span>
                     {% endif %}
                 </p>
+
                 <p class="mb-2">
-                    <strong>Fecha de creación:</strong> 
-                    {{ ticket.fecha_creacion|date:"d/m/Y H:i" }}<br>
-                    <strong>Última actualización:</strong> 
-                    {{ ticket.fecha_actualizacion|date:"d/m/Y H:i" }}
+                    <strong>Fecha de creación:</strong>
+                    {{ ticket.creado_en|date:"d/m/Y H:i" }}<br>
+                    <strong>Última actualización:</strong>
+                    {{ ticket.actualizado_en|date:"d/m/Y H:i" }}
                 </p>
+
                 <p class="mb-0">
                     <strong>Descripción:</strong><br>
                     {{ ticket.descripcion|linebreaks }}
@@ -69,65 +75,52 @@
             </div>
         </div>
 
+        {# Acciones rápidas sobre el estado del ticket #}
+        {% if ticket.estado != 'CERRADO' %}
         <div class="card shadow-sm border-0">
             <div class="card-body">
-                <h5 class="card-title mb-3">Responder ticket</h5>
+                <h5 class="card-title mb-3">Actualizar estado</h5>
                 <form method="post">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        {{ form.mensaje.label_tag }}
-                        {{ form.mensaje }}
-                        {% if form.mensaje.errors %}
-                            <div class="text-danger small">
-                                {{ form.mensaje.errors }}
-                            </div>
+                    <div class="btn-group" role="group">
+                        {% if ticket.estado != 'EN_PROCESO' %}
+                            <button name="accion" value="tomar" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-play-circle"></i> Marcar en proceso
+                            </button>
+                        {% endif %}
+                        {% if ticket.estado != 'RESUELTO' %}
+                            <button name="accion" value="resolver" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-check-circle"></i> Marcar resuelto
+                            </button>
+                        {% endif %}
+                        {% if ticket.estado != 'CERRADO' %}
+                            <button name="accion" value="cerrar" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-x-circle"></i> Cerrar
+                            </button>
                         {% endif %}
                     </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-send"></i> Enviar respuesta
-                    </button>
                 </form>
             </div>
         </div>
+        {% endif %}
     </div>
 
-    <!-- Historial de respuestas -->
+    <!-- Bloque lateral (info técnico asignado) -->
     <div class="col-lg-5">
         <div class="card shadow-sm border-0">
             <div class="card-body">
-                <h5 class="card-title mb-3">Historial de respuestas</h5>
-
-                {% if ticket.respuestas.all %}
-                    <div class="list-group list-group-flush">
-                        {% for r in ticket.respuestas.all %}
-                            <div class="list-group-item">
-                                <div class="d-flex justify-content-between">
-                                    <strong>
-                                        {% if r.autor %}
-                                            {{ r.autor.nombre_apellido }}
-                                        {% else %}
-                                            Usuario eliminado
-                                        {% endif %}
-                                    </strong>
-                                    <small class="text-muted">
-                                        {{ r.fecha|date:"d/m/Y H:i" }}
-                                    </small>
-                                </div>
-                                <p class="mb-0 mt-1">
-                                    {{ r.mensaje|linebreaks }}
-                                </p>
-                            </div>
-                        {% empty %}
-                            <p class="text-muted mb-0">
-                                Aún no hay respuestas en este ticket.
-                            </p>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted mb-0">
-                        Aún no hay respuestas en este ticket.
-                    </p>
-                {% endif %}
+                <h5 class="card-title mb-3">Gestión técnica</h5>
+                <p class="mb-1">
+                    <strong>Técnico asignado:</strong><br>
+                    {% if ticket.tecnico_asignado %}
+                        {{ ticket.tecnico_asignado.nombre_apellido }}
+                    {% else %}
+                        <span class="text-muted">Sin asignar</span>
+                    {% endif %}
+                </p>
+                <p class="text-muted mb-0">
+                    Usa los botones de "Actualizar estado" para tomar el ticket, marcarlo resuelto o cerrarlo.
+                </p>
             </div>
         </div>
     </div>
