@@ -93,7 +93,6 @@ class Comerciante(models.Model):
     ROLES_CHOICES = [
         ('COMERCIANTE', 'Comerciante'),
         ('ADMIN', 'Administrador'),
-        ('PROVEEDOR', 'Proveedor'),
     ]
 
     # Autenticación y contacto
@@ -295,53 +294,3 @@ class Beneficio(models.Model):
 
     def __str__(self):
         return f"[{self.get_categoria_display()}] {self.titulo}"
-
-
-class Proveedor(models.Model):
-    nombre = models.CharField(max_length=100)
-    descripcion = models.TextField(max_length=500, blank=True)
-    foto_perfil = models.ImageField(upload_to='proveedores/fotos/', null=True, blank=True)
-    email_contacto = models.EmailField(blank=True, null=True)
-    whatsapp_contacto = models.CharField(
-        max_length=12,
-        blank=True,
-        null=True,
-        help_text="Formato: +569XXXXXXXX"
-    )
-    fecha_registro = models.DateTimeField(auto_now_add=True)
-    ultima_conexion = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        verbose_name = 'Proveedor'
-        verbose_name_plural = 'Proveedores'
-
-    def __str__(self):
-        return self.nombre
-
-    def get_profile_picture_url(self):
-        DEFAULT_IMAGE_PATH = 'usuarios/img/default_profile.png'
-        if self.foto_perfil and self.foto_perfil.name and self.foto_perfil.name != DEFAULT_IMAGE_PATH:
-            return self.foto_perfil.url
-        return static('img/default_profile.png')
-
-
-class Propuesta(models.Model):
-    proveedor = models.ForeignKey(
-        Proveedor,
-        on_delete=models.CASCADE,
-        related_name='propuestas'
-    )
-    titulo = models.CharField(max_length=100)
-    rubros_ofertados = models.CharField(
-        max_length=255,
-        verbose_name='Rubros Ofertados',
-        help_text='Separados por coma'
-    )
-    zona_geografica = models.CharField(max_length=100)
-
-    class Meta:
-        verbose_name = "Propuesta de Proveedor"
-        verbose_name_plural = "Propuestas de Proveedores"
-
-    def __str__(self):
-        return f"{self.titulo} - {self.proveedor.nombre}"

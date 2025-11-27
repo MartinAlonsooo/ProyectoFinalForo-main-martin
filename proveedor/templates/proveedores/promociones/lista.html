@@ -4,11 +4,11 @@
 
 {% block extra_css %}
 <style>
+    /* Estilos para el contenedor, filtros, grid y tarjetas */
     .promociones-container {
         max-width: 1200px;
         margin: 0 auto;
     }
-
     .page-header {
         display: flex;
         justify-content: space-between;
@@ -17,13 +17,11 @@
         flex-wrap: wrap;
         gap: 1rem;
     }
-
     .page-title {
         font-size: 2rem;
         font-weight: 700;
         color: var(--text-primary);
     }
-
     .btn-new {
         background-color: #0095ff;
         color: white;
@@ -36,13 +34,10 @@
         gap: 0.5rem;
         transition: all 0.2s;
     }
-
     .btn-new:hover {
         background-color: #0077cc;
         transform: translateY(-2px);
     }
-
-    /* FILTROS */
     .filtros-container {
         background: var(--bg-primary);
         padding: 1.5rem;
@@ -51,26 +46,22 @@
         box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         border: 1px solid var(--border-color);
     }
-
     .filtros-row {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 1rem;
         margin-bottom: 1rem;
     }
-
     .filtro-group {
         display: flex;
         flex-direction: column;
     }
-
     .filtro-group label {
         margin-bottom: 0.5rem;
         font-weight: 600;
         color: var(--text-primary);
         font-size: 0.9rem;
     }
-
     .filtro-group select,
     .filtro-group input {
         padding: 0.6rem;
@@ -80,19 +71,16 @@
         background: var(--bg-primary);
         color: var(--text-primary);
     }
-
     .filtro-group select:focus,
     .filtro-group input:focus {
         outline: none;
         border-color: #0095ff;
     }
-
     .filtros-actions {
         display: flex;
         gap: 0.75rem;
         justify-content: flex-end;
     }
-
     .btn-filtrar {
         background: #0095ff;
         color: white;
@@ -103,12 +91,10 @@
         cursor: pointer;
         transition: all 0.2s;
     }
-
     .btn-filtrar:hover {
         background: #0077cc;
         transform: translateY(-2px);
     }
-
     .btn-limpiar {
         background: var(--bg-secondary);
         color: var(--text-primary);
@@ -121,18 +107,15 @@
         text-decoration: none;
         display: inline-block;
     }
-
     .btn-limpiar:hover {
         background: var(--border-color);
     }
-
     .filtros-activos {
         margin-top: 1rem;
         display: flex;
         gap: 0.5rem;
         flex-wrap: wrap;
     }
-
     .filtro-tag {
         background: var(--bg-secondary);
         padding: 0.4rem 0.8rem;
@@ -143,21 +126,17 @@
         gap: 0.5rem;
         color: var(--text-primary);
     }
-
     .filtro-tag .remove {
         cursor: pointer;
         color: #dc3545;
         font-weight: bold;
         text-decoration: none;
     }
-
-    /* GRID DE PROMOCIONES */
     .promociones-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
         gap: 1.5rem;
     }
-
     .promocion-card {
         background: var(--bg-primary);
         border-radius: 12px;
@@ -166,12 +145,10 @@
         transition: transform 0.2s;
         border: 1px solid var(--border-color);
     }
-
     .promocion-card:hover {
         transform: translateY(-4px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     }
-
     .promocion-imagen {
         width: 100%;
         height: 200px;
@@ -181,29 +158,24 @@
         justify-content: center;
         position: relative;
     }
-
     .promocion-imagen img {
         width: 100%;
         height: 100%;
         object-fit: cover;
     }
-
     .promocion-imagen .placeholder {
         font-size: 4rem;
         color: white;
     }
-
     .promocion-content {
         padding: 1.25rem;
     }
-
     .promocion-titulo {
         font-size: 1.1rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
         color: var(--text-primary);
     }
-
     .promocion-descripcion {
         color: var(--text-secondary);
         font-size: 0.9rem;
@@ -214,7 +186,6 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
-
     .promocion-fechas {
         background: var(--bg-secondary);
         padding: 0.8rem;
@@ -222,16 +193,13 @@
         margin-bottom: 1rem;
         font-size: 0.85rem;
     }
-
     .promocion-fechas p {
         margin: 0.2rem 0;
         color: var(--text-secondary);
     }
-
     .promocion-fechas strong {
         color: #f5576c;
     }
-
     .promocion-estado {
         display: inline-block;
         padding: 0.3rem 0.8rem;
@@ -240,32 +208,26 @@
         font-weight: 600;
         margin-bottom: 1rem;
     }
-
     .estado-vigente {
         background: #d4edda;
         color: #155724;
     }
-
     .estado-programada {
         background: #d1ecf1;
         color: #0c5460;
     }
-
     .estado-vencida {
         background: #f8d7da;
         color: #721c24;
     }
-
     .estado-inactiva {
         background: #e2e3e5;
         color: #383d41;
     }
-
     .promocion-actions {
         display: flex;
         gap: 0.5rem;
     }
-
     .btn-action {
         flex: 1;
         padding: 0.6rem;
@@ -276,29 +238,24 @@
         font-weight: 600;
         transition: all 0.2s;
     }
-
     .btn-edit {
         background: #fff3cd;
         color: #856404;
         border: 1px solid #ffeaa7;
     }
-
     .btn-edit:hover {
         background: #ffeaa7;
         transform: translateY(-2px);
     }
-
     .btn-delete {
         background: #f8d7da;
         color: #721c24;
         border: 1px solid #f5c6cb;
     }
-
     .btn-delete:hover {
         background: #f5c6cb;
         transform: translateY(-2px);
     }
-
     .empty-state {
         text-align: center;
         padding: 4rem 2rem;
@@ -306,27 +263,22 @@
         border-radius: 12px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
-
     .empty-state h3 {
         font-size: 1.5rem;
         margin-bottom: 1rem;
         color: var(--text-secondary);
     }
-
     @media (max-width: 768px) {
         .promociones-grid {
             grid-template-columns: 1fr;
         }
-
         .page-header {
             flex-direction: column;
             align-items: stretch;
         }
-
         .btn-new {
             justify-content: center;
         }
-
         .filtros-row {
             grid-template-columns: 1fr;
         }

@@ -50,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'proveedor.middleware.ProveedorMiddleware',
 ]
 
 ROOT_URLCONF = 'proyect.urls'
@@ -134,7 +135,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+
 # Ruta de la imagen de perfil por defecto (debe existir en usuarios/static/img/)
 DEFAULT_PROFILE_IMAGE = 'usuarios/img/default_profile.png'
 
 LOGIN_URL = '/login/'
+
+# Configuración de sesiones
+SESSION_COOKIE_AGE = 1209600  # 2 semanas en segundos
+SESSION_SAVE_EVERY_REQUEST = False
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False

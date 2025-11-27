@@ -1,655 +1,221 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuración - Club Almacén</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends 'base.html' %}
 
-        :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f5f5f5;
-            --text-primary: #333333;
-            --text-secondary: #666666;
-            --border-color: #e0e0e0;
-            --accent-color: #0095ff;
-            --card-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
+{% block title %}Configuración{% endblock %}
 
-        body.dark-mode {
-            --bg-primary: #1a1a1a;
-            --bg-secondary: #2d2d2d;
-            --text-primary: #e0e0e0;
-            --text-secondary: #b0b0b0;
-            --border-color: #404040;
-            --card-shadow: 0 1px 3px rgba(255,255,255,0.08);
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .page-header {
-            margin-bottom: 2rem;
-        }
-
-        .page-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .page-subtitle {
-            color: var(--text-secondary);
-        }
-
-        .settings-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .settings-card {
-            background: var(--bg-primary);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: var(--card-shadow);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .card-icon {
-            font-size: 1.5rem;
-        }
-
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-        }
-
-        .card-description {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-        }
-
-        /* FOTO DE PERFIL */
-        .profile-photo-section {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-        }
-
-        .current-photo {
-            position: relative;
-        }
-
-        .photo-preview {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid var(--border-color);
-        }
-
-        .photo-placeholder {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            color: white;
-            font-weight: 700;
-            border: 4px solid var(--border-color);
-        }
-
-        .photo-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .btn {
-            padding: 0.6rem 1.5rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background-color: var(--accent-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #0077cc;
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            background-color: var(--bg-secondary);
-        }
-
-        input[type="file"] {
-            padding: 0.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            cursor: pointer;
-        }
-
-        /* MODO OSCURO */
-        .theme-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: 8px;
-        }
-
-        .toggle-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .toggle-icon {
-            font-size: 2rem;
-        }
-
-        .toggle-text h3 {
-            font-size: 1rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .toggle-text p {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        /* Switch Toggle */
-        .switch {
-            position: relative;
-            width: 60px;
-            height: 32px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: 0.3s;
-            border-radius: 32px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 24px;
-            width: 24px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: 0.3s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: var(--accent-color);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(28px);
-        }
-
-        /* NOTIFICACIONES */
-        .notification-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            margin-bottom: 0.75rem;
-        }
-
-        .notification-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .notification-icon {
-            font-size: 1.5rem;
-        }
-
-        .notification-details h4 {
-            font-size: 0.95rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .notification-details p {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        /* IDIOMA Y REGIÓN */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-size: 0.95rem;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
-
-        /* BOTONES DE ACCIÓN */
-        .actions-footer {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            margin-top: 2rem;
-        }
-
-        /* SUCCESS MESSAGE */
-        .success-message {
-            display: none;
-            background: #d4edda;
-            color: #155724;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            border-left: 4px solid #28a745;
-        }
-
-        .success-message.show {
-            display: block;
-            animation: slideIn 0.3s ease;
-        }
-
-        .error-message {
-            display: none;
-            background: #f8d7da;
-            color: #721c24;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            border-left: 4px solid #dc3545;
-        }
-
-        .error-message.show {
-            display: block;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Django Messages */
-        .messages {
-            margin-bottom: 1rem;
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border-left: 4px solid #28a745;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border-left: 4px solid #dc3545;
-        }
-
-        /* RESPONSIVE */
-        @media (max-width: 768px) {
-            .profile-photo-section {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .photo-actions {
-                width: 100%;
-            }
-
-            .actions-footer {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Django Messages -->
-        {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
-                {{ message }}
-            </div>
-            {% endfor %}
+{% block content %}
+<div class="row">
+    <div class="col-lg-3">
+        <div class="sidebar">
+            <h5 class="mb-3"><i class="fas fa-user"></i> Mi Cuenta</h5>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'proveedores:perfil' %}">
+                        <i class="fas fa-home"></i> Mi Perfil
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'proveedores:editar_perfil' %}">
+                        <i class="fas fa-edit"></i> Editar Perfil
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'proveedores:configuracion' %}">
+                        <i class="fas fa-cog"></i> Configuración
+                    </a>
+                </li>
+            </ul>
         </div>
-        {% endif %}
-
-        <div class="page-header">
-            <h1 class="page-title">⚙️ Configuración</h1>
-            <p class="page-subtitle">Personaliza tu experiencia en la plataforma</p>
-        </div>
-
-        <form method="post" enctype="multipart/form-data" id="configForm">
-            {% csrf_token %}
-            
-            <div class="settings-grid">
-                <!-- FOTO DE PERFIL -->
-                <div class="settings-card">
-                    <div class="card-header">
-                        <span class="card-icon">📸</span>
-                        <h2 class="card-title">Foto de Perfil</h2>
-                    </div>
-                    <p class="card-description">Sube una foto permanente para tu cuenta</p>
-                    
-                    <div class="profile-photo-section">
-                        <div class="current-photo">
-                            {% if proveedor.foto_perfil %}
-                                <img src="{{ proveedor.foto_perfil.url }}" class="photo-preview">
-                            {% else %}
-                                <div class="photo-placeholder">
-                                    {% if user.first_name %}
-                                        {{ user.first_name|slice:":1"|upper }}
-                                    {% else %}
-                                        {{ user.email|slice:":1"|upper }}
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="photo-actions">
-                            {{ form.foto_perfil }}
-                            {% if proveedor.foto_perfil %}
-                            <a href="{% url 'proveedores:eliminar_foto_perfil' %}" class="btn btn-secondary">
-                                🗑️ Eliminar Foto
-                            </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODO OSCURO -->
-                <div class="settings-card">
-                    <div class="card-header">
-                        <span class="card-icon">🌓</span>
-                        <h2 class="card-title">Apariencia</h2>
-                    </div>
-                    <p class="card-description">Cambia entre modo claro y oscuro</p>
-                    
-                    <div class="theme-toggle">
-                        <div class="toggle-info">
-                            <span class="toggle-icon" id="themeIcon">
-                                {% if proveedor.modo_oscuro %}🌙{% else %}☀️{% endif %}
-                            </span>
-                            <div class="toggle-text">
-                                <h3 id="themeTitle">
-                                    {% if proveedor.modo_oscuro %}Modo Oscuro{% else %}Modo Claro{% endif %}
-                                </h3>
-                                <p id="themeDescription">
-                                    {% if proveedor.modo_oscuro %}La interfaz usa colores oscuros{% else %}La interfaz usa colores claros{% endif %}
-                                </p>
-                            </div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" name="modo_oscuro" id="darkModeToggle"
-                                   {% if proveedor.modo_oscuro %}checked{% endif %}>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- NOTIFICACIONES -->
-                <div class="settings-card">
-                    <div class="card-header">
-                        <span class="card-icon">🔔</span>
-                        <h2 class="card-title">Notificaciones</h2>
-                    </div>
-                    <p class="card-description">Controla qué notificaciones deseas recibir</p>
-                    
-                    <div class="notification-item">
-                        <div class="notification-info">
-                            <span class="notification-icon">📧</span>
-                            <div class="notification-details">
-                                <h4>Notificaciones por Email</h4>
-                                <p>Recibe actualizaciones en tu correo</p>
-                            </div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" name="notif_email"
-                                   {% if proveedor.notif_email %}checked{% endif %}>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="notification-item">
-                        <div class="notification-info">
-                            <span class="notification-icon">💬</span>
-                            <div class="notification-details">
-                                <h4>Mensajes Nuevos</h4>
-                                <p>Alerta cuando recibas mensajes</p>
-                            </div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" name="notif_mensajes"
-                                   {% if proveedor.notif_mensajes %}checked{% endif %}>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="notification-item">
-                        <div class="notification-info">
-                            <span class="notification-icon">📦</span>
-                            <div class="notification-details">
-                                <h4>Nuevos Pedidos</h4>
-                                <p>Notificación de pedidos recibidos</p>
-                            </div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" name="notif_pedidos"
-                                   {% if proveedor.notif_pedidos %}checked{% endif %}>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- IDIOMA Y REGIÓN -->
-                <div class="settings-card">
-                    <div class="card-header">
-                        <span class="card-icon">🌍</span>
-                        <h2 class="card-title">Idioma y Región</h2>
-                    </div>
-                    <p class="card-description">Configura tu idioma y zona horaria</p>
-                    
-                    <div class="form-group">
-                        <label for="id_idioma">Idioma</label>
-                        <select name="idioma" id="id_idioma" class="form-control">
-                            <option value="es" {% if proveedor.idioma == 'es' %}selected{% endif %}>Español</option>
-                            <option value="en" {% if proveedor.idioma == 'en' %}selected{% endif %}>English</option>
-                            <option value="pt" {% if proveedor.idioma == 'pt' %}selected{% endif %}>Português</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="id_zona_horaria">Zona Horaria</label>
-                        <select name="zona_horaria" id="id_zona_horaria" class="form-control">
-                            <option value="America/Santiago" {% if proveedor.zona_horaria == 'America/Santiago' %}selected{% endif %}>Santiago (GMT-3)</option>
-                            <option value="America/Buenos_Aires" {% if proveedor.zona_horaria == 'America/Buenos_Aires' %}selected{% endif %}>Buenos Aires (GMT-3)</option>
-                            <option value="America/Sao_Paulo" {% if proveedor.zona_horaria == 'America/Sao_Paulo' %}selected{% endif %}>São Paulo (GMT-3)</option>
-                            <option value="America/Mexico_City" {% if proveedor.zona_horaria == 'America/Mexico_City' %}selected{% endif %}>Ciudad de México (GMT-6)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- PRIVACIDAD -->
-                <div class="settings-card">
-                    <div class="card-header">
-                        <span class="card-icon">🔒</span>
-                        <h2 class="card-title">Privacidad</h2>
-                    </div>
-                    <p class="card-description">Controla quién puede ver tu información</p>
-                    
-                    <div class="notification-item">
-                        <div class="notification-info">
-                            <span class="notification-icon">👁️</span>
-                            <div class="notification-details">
-                                <h4>Perfil Público</h4>
-                                <p>Permite que otros vean tu perfil</p>
-                            </div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" name="perfil_publico"
-                                   {% if proveedor.perfil_publico %}checked{% endif %}>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="notification-item">
-                        <div class="notification-info">
-                            <span class="notification-icon">📊</span>
-                            <div class="notification-details">
-                                <h4>Mostrar Estadísticas</h4>
-                                <p>Muestra tus estadísticas en el perfil</p>
-                            </div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" name="mostrar_estadisticas"
-                                   {% if proveedor.mostrar_estadisticas %}checked{% endif %}>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ACCIONES FINALES -->
-            <div class="actions-footer">
-                <a href="{% url 'proveedores:directorio_proveedores' %}" class="btn btn-secondary">
-                    ← Cancelar
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    💾 Guardar Cambios
-                </button>
-            </div>
-        </form>
     </div>
-
-    <script>
-        // Aplicar modo oscuro al cargar la página
-        document.addEventListener('DOMContentLoaded', function() {
-            const darkModeToggle = document.getElementById('darkModeToggle');
-            const themeIcon = document.getElementById('themeIcon');
-            const themeTitle = document.getElementById('themeTitle');
-            const themeDescription = document.getElementById('themeDescription');
-
-            // Aplicar modo oscuro si está activado
-            if (darkModeToggle.checked) {
-                document.body.classList.add('dark-mode');
-            }
-
-            // Listener para cambios en tiempo real
-            darkModeToggle.addEventListener('change', function() {
-                const isDark = this.checked;
-                document.body.classList.toggle('dark-mode', isDark);
+    
+    <div class="col-lg-9">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-cog"></i> Configuración de la Cuenta</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Preferencias de Visualización -->
+                    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-palette"></i> Preferencias de Visualización</h5>
+                    
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            {{ form.modo_oscuro }}
+                            <label class="form-check-label" for="id_modo_oscuro">
+                                <i class="fas fa-moon"></i> Modo Oscuro
+                            </label>
+                            <small class="form-text text-muted d-block">
+                                Activa el modo oscuro para una visualización más cómoda en ambientes con poca luz
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Notificaciones -->
+                    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-bell"></i> Notificaciones</h5>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch mb-3">
+                            {{ form.notif_email }}
+                            <label class="form-check-label" for="id_notif_email">
+                                <i class="fas fa-envelope"></i> Notificaciones por Email
+                            </label>
+                            <small class="form-text text-muted d-block">
+                                Recibe actualizaciones importantes por correo electrónico
+                            </small>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            {{ form.notif_mensajes }}
+                            <label class="form-check-label" for="id_notif_mensajes">
+                                <i class="fas fa-comment"></i> Notificaciones de Mensajes
+                            </label>
+                            <small class="form-text text-muted d-block">
+                                Recibe alertas cuando tengas nuevos mensajes
+                            </small>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            {{ form.notif_pedidos }}
+                            <label class="form-check-label" for="id_notif_pedidos">
+                                <i class="fas fa-shopping-cart"></i> Notificaciones de Pedidos
+                            </label>
+                            <small class="form-text text-muted d-block">
+                                Recibe alertas sobre nuevos pedidos y actualizaciones
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Preferencias Regionales -->
+                    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-globe"></i> Preferencias Regionales</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Idioma</label>
+                            {{ form.idioma }}
+                            {% if form.idioma.errors %}
+                                <div class="text-danger small">{{ form.idioma.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Zona Horaria</label>
+                            {{ form.zona_horaria }}
+                            {% if form.zona_horaria.errors %}
+                                <div class="text-danger small">{{ form.zona_horaria.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Privacidad -->
+                    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-shield-alt"></i> Privacidad</h5>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch mb-3">
+                            {{ form.perfil_publico }}
+                            <label class="form-check-label" for="id_perfil_publico">
+                                <i class="fas fa-eye"></i> Perfil Público
+                            </label>
+                            <small class="form-text text-muted d-block">
+                                Permite que otros usuarios vean tu perfil en el directorio público
+                            </small>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            {{ form.mostrar_estadisticas }}
+                            <label class="form-check-label" for="id_mostrar_estadisticas">
+                                <i class="fas fa-chart-bar"></i> Mostrar Estadísticas
+                            </label>
+                            <small class="form-text text-muted d-block">
+                                Muestra las estadísticas de tu perfil a otros usuarios
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Configuración
+                        </button>
+                        <a href="{% url 'proveedores:perfil' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Zona de Peligro -->
+        <div class="card border-danger mt-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Zona de Peligro</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Las acciones en esta sección son permanentes y no se pueden deshacer. 
+                    Por favor, procede con precaución.
+                </p>
                 
-                if (isDark) {
-                    themeIcon.textContent = '🌙';
-                    themeTitle.textContent = 'Modo Oscuro';
-                    themeDescription.textContent = 'La interfaz usa colores oscuros';
-                } else {
-                    themeIcon.textContent = '☀️';
-                    themeTitle.textContent = 'Modo Claro';
-                    themeDescription.textContent = 'La interfaz usa colores claros';
-                }
-            });
-        });
-    </script>
-</body>
-</html>
+                <div class="d-grid gap-2 d-md-flex">
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#desactivarCuentaModal">
+                        <i class="fas fa-pause"></i> Desactivar Cuenta
+                    </button>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#eliminarCuentaModal">
+                        <i class="fas fa-trash"></i> Eliminar Cuenta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Desactivar Cuenta -->
+<div class="modal fade" id="desactivarCuentaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="fas fa-pause"></i> Desactivar Cuenta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas desactivar tu cuenta?</p>
+                <p class="text-muted">Tu perfil no será visible en el directorio público, pero podrás reactivarlo en cualquier momento.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning">Desactivar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar Cuenta -->
+<div class="modal fade" id="eliminarCuentaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Eliminar Cuenta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <strong>Advertencia:</strong> Esta acción es irreversible.
+                </div>
+                <p>Al eliminar tu cuenta:</p>
+                <ul>
+                    <li>Se eliminarán todos tus productos y promociones</li>
+                    <li>Se eliminarán tus solicitudes de contacto</li>
+                    <li>Perderás acceso permanente a tu cuenta</li>
+                    <li>Esta acción NO se puede deshacer</li>
+                </ul>
+                <p><strong>¿Estás absolutamente seguro?</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger">Sí, Eliminar mi Cuenta</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

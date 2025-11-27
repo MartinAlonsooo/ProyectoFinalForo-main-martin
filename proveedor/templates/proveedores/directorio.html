@@ -1,371 +1,183 @@
 {% extends 'base.html' %}
 
-{% block title %}Directorio de Proveedores - Club Almacén{% endblock %}
-
-{% block extra_css %}
-<style>
-    .page-header {
-        margin-bottom: 2rem;
-    }
-
-    .page-title {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1a1a1a;
-        margin-bottom: 0.5rem;
-    }
-
-    .page-subtitle {
-        color: #666;
-        font-size: 1rem;
-    }
-
-    .filters-section {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        margin-bottom: 2rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-
-    .filters-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .filter-group {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .filter-group label {
-        font-size: 0.85rem;
-        color: #666;
-        margin-bottom: 0.3rem;
-        font-weight: 500;
-    }
-
-    .filter-group select,
-    .filter-group input {
-        padding: 0.6rem;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 0.9rem;
-        background-color: white;
-    }
-
-    .filter-actions {
-        display: flex;
-        gap: 0.5rem;
-        justify-content: flex-end;
-    }
-
-    .btn-secondary {
-        background-color: #f5f5f5;
-        color: #333;
-        padding: 0.6rem 1.5rem;
-        border-radius: 6px;
-        border: 1px solid #ddd;
-        cursor: pointer;
-        font-size: 0.9rem;
-        text-decoration: none;
-        display: inline-block;
-    }
-
-    .btn-secondary:hover {
-        background-color: #e8e8e8;
-    }
-
-    .proveedores-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .proveedor-card {
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        transition: transform 0.2s, box-shadow 0.2s;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .proveedor-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    }
-
-    .proveedor-logo {
-        width: 100%;
-        height: 200px;
-        background-color: #f5f5f5;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-    }
-
-    .proveedor-logo img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .proveedor-logo.default {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .proveedor-logo.default-green {
-        background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
-    }
-
-    .proveedor-logo.default-teal {
-        background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
-    }
-
-    .proveedor-logo.default-gold {
-        background: linear-gradient(135deg, #b79891 0%, #94716b 100%);
-    }
-
-    .logo-placeholder {
-        font-size: 3rem;
-        color: white;
-    }
-
-    .proveedor-content {
-        padding: 1.25rem;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .proveedor-name {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #1a1a1a;
-        margin-bottom: 0.5rem;
-    }
-
-    .proveedor-description {
-        font-size: 0.9rem;
-        color: #666;
-        line-height: 1.5;
-        margin-bottom: 1rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    .proveedor-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
-        margin-bottom: 1rem;
-    }
-
-    .tag {
-        background-color: #e3f2fd;
-        color: #1976d2;
-        padding: 0.3rem 0.7rem;
-        border-radius: 16px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-
-    .proveedor-footer {
-        margin-top: auto;
-        padding-top: 1rem;
-        border-top: 1px solid #f0f0f0;
-    }
-
-    .btn-contactar {
-        width: 100%;
-        background-color: #0095ff;
-        color: white;
-        padding: 0.7rem;
-        border-radius: 6px;
-        border: none;
-        cursor: pointer;
-        font-size: 0.95rem;
-        font-weight: 600;
-        text-align: center;
-        text-decoration: none;
-        display: block;
-        transition: background-color 0.2s;
-    }
-
-    .btn-contactar:hover {
-        background-color: #0077cc;
-    }
-
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 0.5rem;
-        margin-top: 2rem;
-    }
-
-    .pagination a,
-    .pagination span {
-        padding: 0.5rem 0.9rem;
-        border-radius: 6px;
-        text-decoration: none;
-        color: #666;
-        border: 1px solid #ddd;
-        transition: all 0.2s;
-    }
-
-    .pagination a:hover {
-        background-color: #0095ff;
-        color: white;
-        border-color: #0095ff;
-    }
-
-    .pagination .current {
-        background-color: #0095ff;
-        color: white;
-        border-color: #0095ff;
-        font-weight: 600;
-    }
-
-    .empty-state {
-        grid-column: 1/-1;
-        text-align: center;
-        padding: 3rem;
-        color: #999;
-    }
-
-    @media (max-width: 768px) {
-        .proveedores-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .filters-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-{% endblock %}
+{% block title %}Directorio de Proveedores{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header">
-        <h1 class="page-title">Directorio de Proveedores</h1>
-        <p class="page-subtitle">Encuentra los mejores proveedores para tu negocio de barrio.</p>
+<!-- Banner Hero -->
+<div class="bg-primary text-white py-5 mb-4 rounded">
+    <div class="text-center">
+        <h1><i class="fas fa-store"></i> Directorio de Proveedores</h1>
+        <p class="lead">Encuentra los mejores proveedores para tu negocio</p>
     </div>
+</div>
 
-    <!-- FILTROS -->
-    <div class="filters-section">
-        <form method="get" action="{% url 'proveedores:directorio_proveedores' %}">
-            <div class="filters-grid">
-                <div class="filter-group">
-                    <label for="buscar">🔍 Buscar</label>
-                    <input type="text" id="buscar" name="q" placeholder="Buscar proveedores..." value="{{ busqueda|default:'' }}">
-                </div>
-
-                <div class="filter-group">
-                    <label for="rubro">Rubro</label>
-                    <select id="rubro" name="categoria">
-                        <option value="">Todos los rubros</option>
-                        {% for categoria in categorias %}
-                        <option value="{{ categoria.id }}" {% if categoria.id|stringformat:"s" == categoria_seleccionada %}selected{% endif %}>
-                            {{ categoria.nombre }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="zona">Zona Geográfica</label>
-                    <select id="zona" name="region">
-                        <option value="">Todas las zonas</option>
-                        {% for region in regiones %}
-                        <option value="{{ region.id }}" {% if region.id|stringformat:"s" == region_seleccionada %}selected{% endif %}>
-                            {{ region.nombre }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="ordenar">Ordenar por</label>
-                    <select id="ordenar" name="orden">
-                        <option value="">Destacados primero</option>
-                        <option value="nombre">Nombre A-Z</option>
-                        <option value="reciente">Más recientes</option>
-                    </select>
-                </div>
+<!-- Formulario de Búsqueda -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Buscar</label>
+                {{ form.busqueda }}
             </div>
-
-            <div class="filter-actions">
-                <a href="{% url 'proveedores:directorio_proveedores' %}" class="btn-secondary">Limpiar filtros</a>
-                <button type="submit" class="btn-primary">Aplicar filtros</button>
+            <div class="col-md-3">
+                <label class="form-label">Categoría</label>
+                {{ form.categoria }}
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Región</label>
+                {{ form.region }}
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Cobertura</label>
+                {{ form.cobertura }}
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            
+            <div class="col-12">
+                <div class="form-check">
+                    {{ form.verificado }}
+                    <label class="form-check-label" for="id_verificado">
+                        Solo proveedores verificados
+                    </label>
+                </div>
             </div>
         </form>
     </div>
+</div>
 
-    <!-- GRID DE PROVEEDORES -->
-    <div class="proveedores-grid">
+<!-- Resultados -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5><i class="fas fa-list"></i> Resultados: {{ total_proveedores }} proveedores encontrados</h5>
+</div>
+
+{% if page_obj %}
+    <div class="row">
         {% for proveedor in page_obj %}
-        <div class="proveedor-card">
-            <div class="proveedor-logo {% if not proveedor.foto %}default{% cycle '' '-green' '-teal' '-gold' %}{% endif %}">
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100">
+                <!-- Imagen de portada -->
                 {% if proveedor.foto %}
-                    <img src="{{ proveedor.foto.url }}" alt="{{ proveedor.nombre_empresa }}">
+                    <img src="{{ proveedor.foto.url }}" class="card-img-top" 
+                         alt="{{ proveedor.nombre_empresa }}" style="height: 200px; object-fit: cover;">
                 {% else %}
-                    <span class="logo-placeholder">🏪</span>
+                    <div class="bg-gradient bg-primary text-white d-flex align-items-center justify-content-center" 
+                         style="height: 200px;">
+                        <i class="fas fa-store fa-4x opacity-50"></i>
+                    </div>
                 {% endif %}
-            </div>
-
-            <div class="proveedor-content">
-                <h3 class="proveedor-name">{{ proveedor.nombre_empresa }}</h3>
-                <p class="proveedor-description">{{ proveedor.descripcion|truncatewords:20 }}</p>
-
-                <div class="proveedor-tags">
-                    {% for categoria in proveedor.categorias.all|slice:":2" %}
-                    <span class="tag">{{ categoria.nombre }}</span>
-                    {% endfor %}
-                    <span class="tag">📍 {{ proveedor.comuna.nombre|default:"Nacional" }}</span>
+                
+                <div class="card-body">
+                    <!-- Logo/Avatar -->
+                    <div class="d-flex align-items-start mb-3">
+                        {% if proveedor.foto_perfil %}
+                            <img src="{{ proveedor.foto_perfil.url }}" 
+                                 class="rounded-circle me-3" 
+                                 style="width: 60px; height: 60px; object-fit: cover;">
+                        {% else %}
+                            <div class="rounded-circle bg-secondary text-white me-3 d-flex align-items-center justify-content-center"
+                                 style="width: 60px; height: 60px; font-size: 1.5rem;">
+                                {{ proveedor.nombre_empresa|first|upper }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="flex-grow-1">
+                            <h5 class="card-title mb-1">{{ proveedor.nombre_empresa }}</h5>
+                            <small class="text-muted">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {% if proveedor.comuna %}{{ proveedor.comuna.nombre }}{% endif %}
+                            </small>
+                        </div>
+                        
+                        <div>
+                            {% if proveedor.verificado %}
+                                <span class="badge bg-success" title="Proveedor Verificado">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                            {% endif %}
+                            {% if proveedor.destacado %}
+                                <span class="badge bg-warning text-dark" title="Destacado">
+                                    <i class="fas fa-star"></i>
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Descripción -->
+                    <p class="card-text text-muted small">
+                        {{ proveedor.descripcion|truncatewords:20 }}
+                    </p>
+                    
+                    <!-- Categorías -->
+                    <div class="mb-3">
+                        {% for categoria in proveedor.categorias.all|slice:":3" %}
+                            <span class="badge bg-info me-1">{{ categoria.nombre }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Estadísticas -->
+                    <div class="d-flex justify-content-between text-muted small mb-3">
+                        <span><i class="fas fa-eye"></i> {{ proveedor.visitas }} visitas</span>
+                        <span><i class="fas fa-tag"></i> {{ proveedor.get_cobertura_display }}</span>
+                    </div>
+                    
+                    <!-- Botón -->
+                    <div class="d-grid">
+                        <a href="{% url 'proveedores:detalle' proveedor.id %}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-eye"></i> Ver Perfil
+                        </a>
+                    </div>
                 </div>
-
-                <div class="proveedor-footer">
-                    <a href="{% url 'proveedores:detalle_proveedor' proveedor.id %}" class="btn-contactar">
-                        Ver Detalles
-                    </a>
-                </div>
             </div>
-        </div>
-        {% empty %}
-        <div class="empty-state">
-            <p style="font-size: 1.2rem;">No se encontraron proveedores con esos criterios.</p>
-            <a href="{% url 'proveedores:directorio_proveedores' %}" class="btn-primary" style="margin-top: 1rem;">Ver todos los proveedores</a>
         </div>
         {% endfor %}
     </div>
-
-    <!-- PAGINACIÓN -->
+    
+    <!-- Paginación -->
     {% if page_obj.has_other_pages %}
-    <div class="pagination">
-        {% if page_obj.has_previous %}
-        <a href="?page=1{% if busqueda %}&q={{ busqueda }}{% endif %}">« Primera</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}">‹</a>
-        {% endif %}
-
-        <span class="current">{{ page_obj.number }}</span>
-        <span>de</span>
-        <span>{{ page_obj.paginator.num_pages }}</span>
-
-        {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if busqueda %}&q={{ busqueda }}{% endif %}">›</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if busqueda %}&q={{ busqueda }}{% endif %}">Última »</a>
-        {% endif %}
-    </div>
+        <nav aria-label="Paginación" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">Primera</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
     {% endif %}
-</div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+        <h5>No se encontraron proveedores</h5>
+        <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+    </div>
+{% endif %}
 {% endblock %}

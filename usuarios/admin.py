@@ -5,8 +5,6 @@ from .models import (
     Comentario,
     Like,
     Beneficio,
-    Proveedor,
-    Propuesta,
 )
 
 
@@ -70,14 +68,4 @@ class BeneficioAdmin(admin.ModelAdmin):
     search_fields = ('titulo', 'descripcion')
 
 
-@admin.register(Proveedor)
-class ProveedorAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'email_contacto', 'whatsapp_contacto', 'ultima_conexion')
-    search_fields = ('nombre', 'email_contacto')
 
-
-@admin.register(Propuesta)
-class PropuestaAdmin(admin.ModelAdmin):
-    list_display = ('titulo', 'proveedor', 'zona_geografica')
-    list_filter = ('zona_geografica',)
-    search_fields = ('titulo', 'proveedor__nombre', 'rubros_ofertados')

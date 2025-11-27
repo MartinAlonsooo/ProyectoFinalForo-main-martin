@@ -1,4 +1,4 @@
-# usuarios/forms.py (CONTENIDO COMPLETO MODIFICADO)
+# usuarios/forms.py (CONTENIDO COMPLETO CORREGIDO)
 
 from django import forms
 from .models import (
@@ -6,6 +6,7 @@ from .models import (
     RELACION_NEGOCIO_CHOICES, TIPO_NEGOCIO_CHOICES, 
     CATEGORIA_POST_CHOICES, INTERESTS_CHOICES
 ) 
+
 # Opciones de comuna
 COMUNA_CHOICES = [
     ('', 'Selecciona tu comuna'),
@@ -20,18 +21,29 @@ COMUNA_CHOICES = [
 class RegistroComercianteForm(forms.ModelForm):
     password = forms.CharField(
         label='Contraseña',
-        widget=forms.PasswordInput(attrs={'placeholder': 'Mínimo 8 caracteres', 'id': 'password'}),
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'Mínimo 8 caracteres',
+            'id': 'password',
+            'class': 'form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d171b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-[#cfdfe7] dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary h-14 placeholder:text-[#4c809a] dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal'
+        }),
         max_length=255
     )
     confirm_password = forms.CharField(
         label='Confirmar Contraseña',
-        widget=forms.PasswordInput(attrs={'placeholder': 'Repite la contraseña', 'id': 'confirm-password'}),
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'Repite la contraseña',
+            'id': 'confirm-password',
+            'class': 'form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d171b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-[#cfdfe7] dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary h-14 placeholder:text-[#4c809a] dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal'
+        }),
         max_length=255
     )
     comuna_select = forms.ChoiceField(
         choices=COMUNA_CHOICES,
         label='Comuna',
-        widget=forms.Select(attrs={'id': 'commune'})
+        widget=forms.Select(attrs={
+            'id': 'commune',
+            'class': 'form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d171b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-[#cfdfe7] dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary h-14 text-[#4c809a] dark:text-gray-400 p-[15px] text-base font-normal leading-normal'
+        })
     )
 
     class Meta:
@@ -41,11 +53,29 @@ class RegistroComercianteForm(forms.ModelForm):
             'relacion_negocio', 'tipo_negocio',
         )
         widgets = {
-            'nombre_apellido': forms.TextInput(attrs={'placeholder': 'Ej: Juan Pérez', 'id': 'fullname'}),
-            'email': forms.EmailInput(attrs={'placeholder': 'tucorreo@ejemplo.com', 'id': 'email'}),
-            'whatsapp': forms.TextInput(attrs={'placeholder': '+56 9 1234 5678', 'id': 'whatsapp'}),
-            'relacion_negocio': forms.Select(attrs={'id': 'business-relation'}),
-            'tipo_negocio': forms.Select(attrs={'id': 'business-type'}),
+            'nombre_apellido': forms.TextInput(attrs={
+                'placeholder': 'Ej: Juan Pérez',
+                'id': 'fullname',
+                'class': 'form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d171b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-[#cfdfe7] dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary h-14 placeholder:text-[#4c809a] dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal'
+            }),
+            'email': forms.EmailInput(attrs={
+                'placeholder': 'tucorreo@ejemplo.com',
+                'id': 'email',
+                'class': 'form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d171b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-[#cfdfe7] dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary h-14 placeholder:text-[#4c809a] dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal'
+            }),
+            'whatsapp': forms.TextInput(attrs={
+                'placeholder': '+56 9 1234 5678',
+                'id': 'whatsapp',
+                'class': 'form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d171b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-[#cfdfe7] dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary h-14 placeholder:text-[#4c809a] dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal'
+            }),
+            'relacion_negocio': forms.Select(attrs={
+                'id': 'business-relation',
+                'class': 'form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d171b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-[#cfdfe7] dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary h-14 text-[#4c809a] dark:text-gray-400 p-[15px] text-base font-normal leading-normal'
+            }),
+            'tipo_negocio': forms.Select(attrs={
+                'id': 'business-type',
+                'class': 'form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d171b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-[#cfdfe7] dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary h-14 text-[#4c809a] dark:text-gray-400 p-[15px] text-base font-normal leading-normal'
+            }),
         }
 
     def clean(self):
@@ -69,14 +99,14 @@ class LoginForm(forms.Form):
     email = forms.EmailField(
         label='Correo electrónico',
         widget=forms.EmailInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Ingresa tu correo'
+            'class': 'form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d171b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-[#cfdfe7] dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary h-14 placeholder:text-[#4c809a] dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal',
+            'placeholder': 'tucorreo@ejemplo.com'
         })
     )
     password = forms.CharField(
         label='Contraseña',
         widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
+            'class': 'form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d171b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-[#cfdfe7] dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary h-14 placeholder:text-[#4c809a] dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal',
             'placeholder': 'Ingresa tu contraseña'
         })
     )

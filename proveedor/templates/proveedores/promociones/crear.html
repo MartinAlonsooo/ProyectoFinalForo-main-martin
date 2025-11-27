@@ -1,234 +1,315 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Nueva Promoción - Proveedor{% endblock %}
-
-{% block extra_css %}
-<style>
-    .form-container {
-        max-width: 800px;
-        margin: 0 auto;
-        background: white;
-        padding: 2rem;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-
-    .form-header {
-        margin-bottom: 2rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid #f0f0f0;
-    }
-
-    .form-header h1 {
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
-        font-weight: 700;
-    }
-
-    .form-header p {
-        color: #666;
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .form-group label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: #333;
-        font-size: 0.95rem;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 0.95rem;
-        transition: border-color 0.2s;
-    }
-
-    .form-control:focus {
-        outline: none;
-        border-color: #0095ff;
-        box-shadow: 0 0 0 3px rgba(0,149,255,0.1);
-    }
-
-    textarea.form-control {
-        resize: vertical;
-        min-height: 100px;
-    }
-
-    .help-text {
-        font-size: 0.85rem;
-        color: #666;
-        margin-top: 0.3rem;
-        display: block;
-    }
-
-    .errorlist {
-        list-style: none;
-        color: #dc3545;
-        font-size: 0.85rem;
-        margin: 0.3rem 0 0 0;
-        padding: 0;
-    }
-
-    .form-row {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-    }
-
-    .form-check-group {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 0;
-    }
-
-    .form-check-input {
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
-    }
-
-    .form-check-label {
-        cursor: pointer;
-        margin: 0;
-    }
-
-    .form-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-end;
-        margin-top: 2rem;
-        padding-top: 2rem;
-        border-top: 2px solid #f0f0f0;
-    }
-
-    .btn {
-        padding: 0.75rem 2rem;
-        border-radius: 6px;
-        font-weight: 600;
-        text-decoration: none;
-        border: none;
-        cursor: pointer;
-        font-size: 0.95rem;
-        transition: all 0.2s;
-    }
-
-    .btn-cancel {
-        background-color: #f5f5f5;
-        color: #333;
-        border: 1px solid #ddd;
-    }
-
-    .btn-cancel:hover {
-        background-color: #e8e8e8;
-    }
-
-    .btn-primary {
-        background-color: #0095ff;
-        color: white;
-    }
-
-    .btn-primary:hover {
-        background-color: #0077cc;
-    }
-
-    @media (max-width: 768px) {
-        .form-row {
-            grid-template-columns: 1fr;
-        }
-
-        .form-actions {
-            flex-direction: column;
-        }
-
-        .btn {
-            width: 100%;
-        }
-    }
-</style>
-{% endblock %}
+{% block title %}Nueva Promoción - {{ proveedor.nombre_empresa }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="form-container">
-        <div class="form-header">
-            <h1>✨ Crear Nueva Promoción</h1>
-            <p>Completa la información de la promoción que deseas ofrecer</p>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0">✨ Crear Nueva Promoción</h3>
+                    <p class="mb-0 small">Completa la información de la promoción que deseas ofrecer</p>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data" id="promocionForm">
+                        {% csrf_token %}
+
+                        <!-- Información Básica -->
+                        <div class="section-header mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-tag"></i> Información de la Promoción
+                            </h5>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.titulo.id_for_label }}" class="form-label">
+                                {{ form.titulo.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.titulo }}
+                            {% if form.titulo.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.titulo.errors }}
+                                </div>
+                            {% endif %}
+                            {% if form.titulo.help_text %}
+                                <small class="form-text text-muted">{{ form.titulo.help_text }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                {{ form.descripcion.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.descripcion.errors }}
+                                </div>
+                            {% endif %}
+                            {% if form.descripcion.help_text %}
+                                <small class="form-text text-muted">{{ form.descripcion.help_text }}</small>
+                            {% endif %}
+                        </div>
+
+                        <!-- Imagen de la Promoción -->
+                        <div class="section-header mb-4 mt-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-image"></i> Imagen de la Promoción
+                            </h5>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.imagen.id_for_label }}" class="form-label">
+                                {{ form.imagen.label }}
+                            </label>
+                            <div class="custom-file-upload">
+                                {{ form.imagen }}
+                                <div id="imagePreview" class="mt-3" style="display: none;">
+                                    <p class="text-muted small mb-2">Vista previa:</p>
+                                    <img id="preview" src="" alt="Vista previa" class="img-thumbnail" style="max-width: 300px;">
+                                </div>
+                            </div>
+                            {% if form.imagen.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.imagen.errors }}
+                                </div>
+                            {% endif %}
+                            {% if form.imagen.help_text %}
+                                <small class="form-text text-muted">{{ form.imagen.help_text }}</small>
+                            {% endif %}
+                        </div>
+
+                        <!-- Vigencia de la Promoción -->
+                        <div class="section-header mb-4 mt-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-calendar-range"></i> Vigencia de la Promoción
+                            </h5>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.fecha_inicio.id_for_label }}" class="form-label">
+                                    {{ form.fecha_inicio.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.fecha_inicio }}
+                                {% if form.fecha_inicio.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.fecha_inicio.errors }}
+                                    </div>
+                                {% endif %}
+                                {% if form.fecha_inicio.help_text %}
+                                    <small class="form-text text-muted">{{ form.fecha_inicio.help_text }}</small>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.fecha_fin.id_for_label }}" class="form-label">
+                                    {{ form.fecha_fin.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.fecha_fin }}
+                                {% if form.fecha_fin.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.fecha_fin.errors }}
+                                    </div>
+                                {% endif %}
+                                {% if form.fecha_fin.help_text %}
+                                    <small class="form-text text-muted">{{ form.fecha_fin.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="section-header mb-4 mt-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-toggle-on"></i> Estado
+                            </h5>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.activo }}
+                                <label class="form-check-label" for="{{ form.activo.id_for_label }}">
+                                    {{ form.activo.label }}
+                                </label>
+                                {% if form.activo.help_text %}
+                                    <small class="form-text text-muted d-block">{{ form.activo.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Errores generales del formulario -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Botones -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
+                            <a href="{% url 'proveedores:lista_promociones' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="bi bi-save"></i> Crear Promoción
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-
-            <div class="form-group">
-                {{ form.titulo.label_tag }}
-                {{ form.titulo }}
-                {% if form.titulo.help_text %}
-                    <small class="help-text">{{ form.titulo.help_text }}</small>
-                {% endif %}
-                {{ form.titulo.errors }}
-            </div>
-
-            <div class="form-group">
-                {{ form.descripcion.label_tag }}
-                {{ form.descripcion }}
-                {% if form.descripcion.help_text %}
-                    <small class="help-text">{{ form.descripcion.help_text }}</small>
-                {% endif %}
-                {{ form.descripcion.errors }}
-            </div>
-
-            <div class="form-group">
-                {{ form.imagen.label_tag }}
-                {{ form.imagen }}
-                {% if form.imagen.help_text %}
-                    <small class="help-text">{{ form.imagen.help_text }}</small>
-                {% endif %}
-                {{ form.imagen.errors }}
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    {{ form.fecha_inicio.label_tag }}
-                    {{ form.fecha_inicio }}
-                    {% if form.fecha_inicio.help_text %}
-                        <small class="help-text">{{ form.fecha_inicio.help_text }}</small>
-                    {% endif %}
-                    {{ form.fecha_inicio.errors }}
-                </div>
-
-                <div class="form-group">
-                    {{ form.fecha_fin.label_tag }}
-                    {{ form.fecha_fin }}
-                    {% if form.fecha_fin.help_text %}
-                        <small class="help-text">{{ form.fecha_fin.help_text }}</small>
-                    {% endif %}
-                    {{ form.fecha_fin.errors }}
-                </div>
-            </div>
-
-            <div class="form-group">
-                <div class="form-check-group">
-                    {{ form.activo }}
-                    {{ form.activo.label_tag }}
-                </div>
-                {% if form.activo.help_text %}
-                    <small class="help-text">{{ form.activo.help_text }}</small>
-                {% endif %}
-                {{ form.activo.errors }}
-            </div>
-
-            <div class="form-actions">
-                <a href="{% url 'proveedores:lista_promociones' %}" class="btn btn-cancel">Cancelar</a>
-                <button type="submit" class="btn btn-primary">💾 Crear Promoción</button>
-            </div>
-        </form>
     </div>
 </div>
+
+<style>
+    .form-control, .form-select {
+        border-radius: 0.375rem;
+        border: 1px solid #ced4da;
+        padding: 0.575rem 0.75rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .card {
+        border: none;
+        border-radius: 0.75rem;
+    }
+    
+    .card-header {
+        border-radius: 0.75rem 0.75rem 0 0 !important;
+        padding: 1.5rem;
+    }
+    
+    .section-header h5 {
+        color: #495057;
+        font-weight: 600;
+    }
+    
+    .section-header i {
+        color: #ffc107;
+        margin-right: 0.5rem;
+    }
+    
+    .text-danger {
+        color: #dc3545 !important;
+    }
+    
+    .form-switch .form-check-input {
+        width: 2.5em;
+        cursor: pointer;
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+        padding-left: 0.5rem;
+    }
+    
+    .custom-file-upload .form-control {
+        cursor: pointer;
+    }
+    
+    .img-thumbnail {
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 2rem;
+    }
+    
+    .invalid-feedback {
+        display: block;
+        margin-top: 0.25rem;
+    }
+    
+    textarea.form-control {
+        min-height: 120px;
+    }
+    
+    /* Estilos para inputs de fecha */
+    input[type="date"].form-control {
+        position: relative;
+    }
+    
+    input[type="date"].form-control::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+    }
+</style>
+
+<script>
+// Preview de imagen
+const imagenInput = document.getElementById('{{ form.imagen.id_for_label }}');
+if (imagenInput) {
+    imagenInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        } else {
+            document.getElementById('imagePreview').style.display = 'none';
+        }
+    });
+}
+
+// Validación de fechas
+document.getElementById('promocionForm').addEventListener('submit', function(e) {
+    const fechaInicio = document.getElementById('{{ form.fecha_inicio.id_for_label }}').value;
+    const fechaFin = document.getElementById('{{ form.fecha_fin.id_for_label }}').value;
+    
+    if (!fechaInicio) {
+        e.preventDefault();
+        alert('Por favor selecciona la fecha de inicio.');
+        return false;
+    }
+    
+    if (!fechaFin) {
+        e.preventDefault();
+        alert('Por favor selecciona la fecha de fin.');
+        return false;
+    }
+    
+    // Validar que fecha fin sea posterior a fecha inicio
+    if (new Date(fechaFin) < new Date(fechaInicio)) {
+        e.preventDefault();
+        alert('La fecha de fin debe ser posterior a la fecha de inicio.');
+        return false;
+    }
+});
+
+// Establecer fecha mínima como hoy
+const today = new Date().toISOString().split('T')[0];
+const fechaInicioInput = document.getElementById('{{ form.fecha_inicio.id_for_label }}');
+const fechaFinInput = document.getElementById('{{ form.fecha_fin.id_for_label }}');
+
+if (fechaInicioInput) {
+    fechaInicioInput.setAttribute('min', today);
+}
+
+// Actualizar fecha mínima de fin cuando cambie fecha inicio
+if (fechaInicioInput && fechaFinInput) {
+    fechaInicioInput.addEventListener('change', function() {
+        fechaFinInput.setAttribute('min', this.value);
+    });
+}
+</script>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 {% endblock %}

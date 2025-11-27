@@ -1,3 +1,5 @@
+# usuarios/views.py (COMPLETO Y FUNCIONAL)
+
 from datetime import timedelta
 
 from django.contrib import messages
@@ -17,8 +19,6 @@ from .models import (
     Beneficio,
     NIVELES,
     CATEGORIAS,
-    Proveedor,
-    Propuesta,
     RUBROS_CHOICES,
 )
 from .forms import (
@@ -41,6 +41,18 @@ ROLES = {
     'ADMIN': 'Administrador',
     'INVITADO': 'Invitado',
 }
+
+
+# --- Decorador personalizado para reemplazar @login_required ---
+def custom_login_required(view_func):
+    """Decorador personalizado que verifica current_logged_in_user"""
+    def wrapper(request, *args, **kwargs):
+        global current_logged_in_user
+        if not current_logged_in_user:
+            messages.warning(request, 'Por favor, inicia sesión para acceder a esta página.')
+            return redirect('login')
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 # --- Funciones helper ---
@@ -90,88 +102,131 @@ def is_online(last_login):
 # --- Autenticación y cuenta ---
 
 def index(request):
-    return redirect('registro')
+    return redirect('login')
 
 
 def registro_view(request):
-    if request.method == 'POST':
-        form = RegistroComercianteForm(request.POST)
-        if form.is_valid():
-            raw_password = form.cleaned_data.pop('password')
-            hashed_password = make_password(raw_password)
+    """
+    Maneja el registro de nuevos comerciantes.
+    Detecta el envío mediante el botón name="registro_submit".
+    """
+    global current_logged_in_user
+    
+    # Siempre pasamos ambos formularios
+    login_form = LoginForm()
 
-            nuevo_comerciante = form.save(commit=False)
-            nuevo_comerciante.password_hash = hashed_password
-
-            comuna_final = form.cleaned_data.get('comuna')
-            if comuna_final:
-                nuevo_comerciante.comuna = comuna_final
-
-            nuevo_comerciante.puntos = 0
-            nuevo_comerciante.nivel_actual = 'BRONCE'
-
+    if request.method == 'POST' and 'registro_submit' in request.POST:
+        register_form = RegistroComercianteForm(request.POST)
+        
+        if register_form.is_valid():
             try:
+                # Extraemos la contraseña antes de guardar
+                raw_password = register_form.cleaned_data.get('password')
+                
+                # Guardamos el comerciante sin commit para modificarlo
+                nuevo_comerciante = register_form.save(commit=False)
+                
+                # Hasheamos la contraseña
+                nuevo_comerciante.password_hash = make_password(raw_password)
+                
+                # Asignamos la comuna desde comuna_select
+                comuna_final = register_form.cleaned_data.get('comuna_select')
+                if comuna_final:
+                    nuevo_comerciante.comuna = comuna_final
+                
+                # Inicializamos puntos y nivel
+                nuevo_comerciante.puntos = 0
+                nuevo_comerciante.nivel_actual = 'BRONCE'
+                
+                # Aseguramos que NO sea proveedor
+                nuevo_comerciante.es_proveedor = False
+                
+                # Asignamos rol por defecto
+                if not nuevo_comerciante.rol:
+                    nuevo_comerciante.rol = 'COMERCIANTE'
+                
+                # Convertimos el email a minúsculas para evitar duplicados
+                nuevo_comerciante.email = nuevo_comerciante.email.lower()
+                
+                # Guardamos en la base de datos
                 nuevo_comerciante.save()
+                
                 messages.success(request, '¡Registro exitoso! Ya puedes iniciar sesión.')
+                
+                # Redirigimos a login con parámetro para mostrar pestaña de login
                 return redirect('login')
-            except IntegrityError:
-                messages.error(
-                    request,
-                    'Este correo electrónico ya está registrado. '
-                    'Por favor, inicia sesión o usa otro correo.'
-                )
+                
+            except IntegrityError as e:
+                if 'email' in str(e).lower():
+                    messages.error(
+                        request,
+                        'Este correo electrónico ya está registrado. Por favor, inicia sesión o usa otro correo.'
+                    )
+                else:
+                    messages.error(
+                        request,
+                        'Ya existe un usuario con estos datos. Por favor, verifica tu información.'
+                    )
             except Exception as e:
                 messages.error(request, f'Ocurrió un error inesperado al guardar: {e}')
         else:
-            messages.error(request, 'Por favor, corrige los errores del formulario.')
+            # Mostramos los errores específicos del formulario
+            for field, errors in register_form.errors.items():
+                for error in errors:
+                    if field == '__all__':
+                        messages.error(request, error)
+                    else:
+                        field_label = register_form.fields[field].label or field
+                        messages.error(request, f'{field_label}: {error}')
     else:
-        form = RegistroComercianteForm()
+        register_form = RegistroComercianteForm()
 
-    return render(request, 'usuarios/cuenta.html', {'form': form})
+    contexto = {
+        'login_form': login_form,
+        'register_form': register_form,
+        'comerciante': current_logged_in_user,
+    }
+    return render(request, 'usuarios/cuenta.html', contexto)
 
-
-# usuarios/views.py
 
 def login_view(request):
+    """
+    Maneja el login de comerciantes existentes.
+    Detecta el envío mediante el botón name="login_submit".
+    """
     global current_logged_in_user
-    
-    # Siempre creamos el form, independiente del método
-    if request.method == 'POST':
-        form = LoginForm(request.POST)
-    else:
-        form = LoginForm()
-        current_logged_in_user = None
 
-    if request.method == 'POST':
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
+    # Siempre pasamos ambos formularios a la plantilla
+    register_form = RegistroComercianteForm()
+
+    # Solo procesamos el login si el POST proviene del formulario de login
+    if request.method == 'POST' and 'login_submit' in request.POST:
+        login_form = LoginForm(request.POST)
+
+        if login_form.is_valid():
+            email = login_form.cleaned_data['email'].lower()
+            password = login_form.cleaned_data['password']
 
             try:
                 comerciante = Comerciante.objects.get(email=email)
 
                 if check_password(password, comerciante.password_hash):
+                    # Actualizamos nivel y última conexión
                     progreso = calcular_nivel_y_progreso(comerciante.puntos)
                     comerciante.nivel_actual = progreso['nivel_codigo']
-                    
                     comerciante.ultima_conexion = timezone.now()
-                    comerciante.save(update_fields=['ultima_conexion', 'nivel_actual']) 
-                    
+                    comerciante.save(update_fields=['ultima_conexion', 'nivel_actual'])
+
+                    # Guardamos en "sesión" simulada
                     current_logged_in_user = comerciante
-                    
+
                     messages.success(request, f'¡Bienvenido {comerciante.nombre_apellido}!')
 
-                    # 1) Admin
+                    # Redirecciones según rol
                     if comerciante.rol == 'ADMIN':
                         return redirect('panel_admin')
 
-                    # 2) Proveedor
-                    if getattr(comerciante, 'es_proveedor', False):
-                        return redirect('proveedor_dashboard')
-
-                    # 3) Comerciante normal
                     return redirect('plataforma_comerciante')
-
                 else:
                     messages.error(request, 'Contraseña incorrecta. Intenta nuevamente.')
 
@@ -179,11 +234,16 @@ def login_view(request):
                 messages.error(request, 'Este correo no está registrado. Por favor, regístrate primero.')
         else:
             messages.error(request, 'Por favor, completa todos los campos correctamente.')
+    else:
+        # GET o POST que no es del login -> mostramos el formulario vacío
+        login_form = LoginForm()
 
-    # 👇 AQUÍ definimos SIEMPRE el contexto
-    contexto = {'form': form}
+    contexto = {
+        'login_form': login_form,
+        'register_form': register_form,
+        'comerciante': current_logged_in_user,
+    }
     return render(request, 'usuarios/cuenta.html', contexto)
-
 
 
 def logout_view(request):
@@ -199,12 +259,9 @@ def logout_view(request):
 
 # --- Perfil ---
 
+@custom_login_required
 def perfil_view(request):
     global current_logged_in_user
-
-    if not current_logged_in_user:
-        messages.warning(request, 'Por favor, inicia sesión para acceder a tu perfil.')
-        return redirect('login')
 
     comerciante = current_logged_in_user
     progreso = calcular_nivel_y_progreso(comerciante.puntos)
@@ -329,16 +386,10 @@ def perfil_view(request):
 
 # --- Plataforma / Foro ---
 
+@custom_login_required
 def plataforma_comerciante_view(request):
     global current_logged_in_user
-
-    if not current_logged_in_user:
-        messages.warning(
-            request,
-            'Por favor, inicia sesión para acceder a la plataforma.'
-        )
-        return redirect('login')
-
+    
     posts_query = (
         Post.objects
         .select_related('comerciante')
@@ -367,6 +418,9 @@ def plataforma_comerciante_view(request):
         if not categoria_filtros or 'TODAS' in categoria_filtros:
             categoria_filtros = ['TODOS']
 
+    # Verificar si es admin
+    is_admin = current_logged_in_user.rol == 'ADMIN'
+
     context = {
         'comerciante': current_logged_in_user,
         'rol_usuario': ROLES.get(current_logged_in_user.rol, 'Usuario'),
@@ -375,6 +429,9 @@ def plataforma_comerciante_view(request):
         'CATEGORIA_POST_CHOICES': Post._meta.get_field('categoria').choices,
         'categoria_seleccionada': categoria_filtros,
         'comentario_form': ComentarioForm(),
+        'is_admin': is_admin,
+        'notificaciones': [],  # Agregar notificaciones vacías por ahora
+        'external_news': [],  # Agregar noticias vacías por ahora
         'message': (
             f'Bienvenido a la plataforma, '
             f'{current_logged_in_user.nombre_apellido.split()[0]}.'
@@ -384,14 +441,11 @@ def plataforma_comerciante_view(request):
     return render(request, 'usuarios/plataforma_comerciante.html', context)
 
 
+@custom_login_required
 def publicar_post_view(request):
     global current_logged_in_user
 
     if request.method == 'POST':
-        if not current_logged_in_user:
-            messages.error(request, 'Debes iniciar sesión para publicar.')
-            return redirect('login')
-
         try:
             form = PostForm(request.POST, request.FILES)
 
@@ -426,12 +480,9 @@ def publicar_post_view(request):
     return redirect('plataforma_comerciante')
 
 
+@custom_login_required
 def post_detail_view(request, post_id):
     global current_logged_in_user
-
-    if not current_logged_in_user:
-        messages.warning(request, 'Debes iniciar sesión para ver los detalles.')
-        return redirect('login')
 
     post = get_object_or_404(
         Post.objects
@@ -460,12 +511,9 @@ def post_detail_view(request, post_id):
     return render(request, 'usuarios/post_detail.html', context)
 
 
+@custom_login_required
 def add_comment_view(request, post_id):
     global current_logged_in_user
-
-    if not current_logged_in_user:
-        messages.error(request, 'No autorizado para comentar. Inicia sesión.')
-        return redirect('login')
 
     post = get_object_or_404(Post, pk=post_id)
 
@@ -486,12 +534,9 @@ def add_comment_view(request, post_id):
     return redirect('plataforma_comerciante')
 
 
+@custom_login_required
 def like_post_view(request, post_id):
     global current_logged_in_user
-
-    if not current_logged_in_user:
-        messages.error(request, 'Debes iniciar sesión para dar like.')
-        return redirect('login')
 
     post = get_object_or_404(Post, pk=post_id)
 
@@ -512,15 +557,9 @@ def like_post_view(request, post_id):
 
 # --- Beneficios ---
 
+@custom_login_required
 def beneficios_view(request):
     global current_logged_in_user
-
-    if not current_logged_in_user:
-        messages.warning(
-            request,
-            'Por favor, inicia sesión para acceder a los beneficios.'
-        )
-        return redirect('login')
 
     comerciante = current_logged_in_user
     progreso = calcular_nivel_y_progreso(comerciante.puntos)
@@ -571,22 +610,15 @@ def beneficios_view(request):
 
 # --- Gestión de rol proveedor ---
 
+@custom_login_required
 def solicitar_rol_proveedor_view(request):
     global current_logged_in_user
-
-    if not current_logged_in_user:
-        messages.warning(
-            request,
-            'Debes iniciar sesión para realizar esta solicitud.'
-        )
-        return redirect('login')
 
     if request.method == 'POST':
         if current_logged_in_user.es_proveedor:
             messages.info(request, 'Ya tienes el rol de proveedor activo.')
             return redirect('proveedor_dashboard')
 
-        # Aquí podrías solo marcar una solicitud, por ahora activamos directo:
         current_logged_in_user.es_proveedor = True
         current_logged_in_user.save(update_fields=['es_proveedor'])
         messages.success(
@@ -596,210 +628,3 @@ def solicitar_rol_proveedor_view(request):
         return redirect('perfil')
 
     return redirect('perfil')
-
-
-def proveedor_dashboard_view(request):
-    global current_logged_in_user
-
-    if not current_logged_in_user or not getattr(current_logged_in_user, 'es_proveedor', False):
-        messages.warning(request, 'Acceso denegado. Esta interfaz es solo para Proveedores activos.')
-        return redirect('perfil')
-    
-    from proveedor.models import Proveedor  # importante: importar del app proveedor
-
-    try:
-        proveedor_qs = Proveedor.objects.get(usuario=current_logged_in_user)
-    except Proveedor.DoesNotExist:
-        proveedor_qs = None
-
-    context = {
-        'comerciante': current_logged_in_user,
-        'proveedor': proveedor_qs,
-    }
-
-    # 🔴 AQUÍ estaba el problema: nombre de template
-    return render(request, 'proveedores/perfil.html', context)
-
-
-# --- Directorio de proveedores ---
-
-def directorio_view(request):
-    # Cargar algunos proveedores de ejemplo (solo en desarrollo)
-    try:
-        p1, _ = Proveedor.objects.get_or_create(
-            nombre='Distribuidora El Sol',
-            defaults={
-                'email_contacto': 'contacto@elsol.cl',
-                'whatsapp_contacto': '+56911110000',
-                'descripcion': (
-                    'Proveedores de frutas y verduras frescas de temporada. '
-                    'Entrega a domicilio.'
-                ),
-                'ultima_conexion': timezone.now() - timedelta(minutes=1),
-            },
-        )
-        p2, _ = Proveedor.objects.get_or_create(
-            nombre='Carnes El Gaucho',
-            defaults={
-                'email_contacto': 'carnes@gaucho.cl',
-                'whatsapp_contacto': '+56922220000',
-                'descripcion': (
-                    'Las mejores carnes de vacuno, cerdo y pollo. '
-                    'Calidad garantizada.'
-                ),
-                'ultima_conexion': timezone.now() - timedelta(minutes=10),
-            },
-        )
-        p3, _ = Proveedor.objects.get_or_create(
-            nombre='Abarrotes Don Pepe',
-            defaults={
-                'email_contacto': 'info@donpepe.cl',
-                'whatsapp_contacto': '+56933330000',
-                'descripcion': (
-                    'Amplio surtido de abarrotes, conservas y productos no perecibles.'
-                ),
-                'ultima_conexion': timezone.now() - timedelta(seconds=30),
-            },
-        )
-        p4, _ = Proveedor.objects.get_or_create(
-            nombre='Panadería La Espiga',
-            defaults={
-                'email_contacto': 'pan@espiga.cl',
-                'whatsapp_contacto': '+56944440000',
-                'descripcion': (
-                    'Pan fresco, pasteles y bollería artesanal. Despacho diario.'
-                ),
-                'ultima_conexion': timezone.now() - timedelta(hours=2),
-            },
-        )
-        p5, _ = Proveedor.objects.get_or_create(
-            nombre='Limpieza Total',
-            defaults={
-                'email_contacto': 'limpieza@total.cl',
-                'whatsapp_contacto': '+56955550000',
-                'descripcion': (
-                    'Productos de limpieza industrial y para el hogar. '
-                    'Precios mayoristas.'
-                ),
-                'ultima_conexion': timezone.now() - timedelta(minutes=2),
-            },
-        )
-        p6, _ = Proveedor.objects.get_or_create(
-            nombre='Lácteos del Sur',
-            defaults={
-                'email_contacto': 'lacteos@sur.cl',
-                'whatsapp_contacto': '+56966660000',
-                'descripcion': (
-                    'Leche, quesos, yogures y más. Directo del productor.'
-                ),
-                'ultima_conexion': timezone.now() - timedelta(minutes=1),
-            },
-        )
-
-        if not Propuesta.objects.exists():
-            Propuesta.objects.create(
-                proveedor=p1,
-                titulo='Distribuimos frutas y verduras',
-                rubros_ofertados='Frutas y Verduras, Vegetales',
-                zona_geografica='Santiago Centro',
-            )
-            Propuesta.objects.create(
-                proveedor=p2,
-                titulo='Carnes de alta calidad',
-                rubros_ofertados='Carnes, Pollo, Pavo',
-                zona_geografica='Providencia',
-            )
-            Propuesta.objects.create(
-                proveedor=p3,
-                titulo='Amplia variedad de abarrotes',
-                rubros_ofertados='Abarrotes, Dulces',
-                zona_geografica='Ñuñoa',
-            )
-            Propuesta.objects.create(
-                proveedor=p4,
-                titulo='Servicio de panadería diario',
-                rubros_ofertados='Panadería, Pastelería',
-                zona_geografica='La Reina',
-            )
-            Propuesta.objects.create(
-                proveedor=p5,
-                titulo='Insumos de limpieza mayorista',
-                rubros_ofertados='Limpieza, Detergentes',
-                zona_geografica='Las Condes',
-            )
-            Propuesta.objects.create(
-                proveedor=p6,
-                titulo='Venta directa de lácteos',
-                rubros_ofertados='Lácteos, Quesos',
-                zona_geografica='Maipú',
-            )
-    except Exception:
-        pass
-
-    rubro_filter = request.GET.get('rubro', 'TODOS')
-    zona_filter = request.GET.get('zona', 'TODOS')
-    sort_by = request.GET.get('ordenar_por', 'proveedor__nombre')
-
-    propuestas_queryset = Propuesta.objects.select_related('proveedor').all()
-
-    if rubro_filter and rubro_filter != 'TODOS':
-        propuestas_queryset = propuestas_queryset.filter(
-            rubros_ofertados__icontains=rubro_filter
-        )
-    if zona_filter and zona_filter != 'TODOS':
-        propuestas_queryset = propuestas_queryset.filter(
-            zona_geografica__icontains=zona_filter
-        )
-
-    valid_sort_fields = ['proveedor__nombre', '-proveedor__nombre']
-    if sort_by in valid_sort_fields:
-        propuestas_queryset = propuestas_queryset.order_by(sort_by)
-    else:
-        sort_by = 'proveedor__nombre'
-        propuestas_queryset = propuestas_queryset.order_by(sort_by)
-
-    context = {
-        'propuestas': propuestas_queryset,
-        'RUBROS_CHOICES': RUBROS_CHOICES,
-        'ZONAS': [
-            'Santiago Centro',
-            'Providencia',
-            'Ñuñoa',
-            'Las Condes',
-            'Maipú',
-            'La Reina',
-        ],
-        'current_rubro': rubro_filter,
-        'current_zona': zona_filter,
-        'current_sort': sort_by,
-        'comerciante': current_logged_in_user,
-    }
-
-    return render(request, 'usuarios/directorio.html', context)
-
-
-def proveedor_perfil_view(request, pk):
-    proveedor = get_object_or_404(Proveedor, pk=pk)
-
-    is_online_status = is_online(proveedor.ultima_conexion)
-
-    propuestas = Propuesta.objects.filter(proveedor=proveedor)
-
-    rubros_list = propuestas.values_list('rubros_ofertados', flat=True)
-    rubros_ofertados = ', '.join(rubros_list) if rubros_list else 'No especificados'
-
-    zona_geografica = (
-        propuestas.first().zona_geografica if propuestas.exists() else 'No especificada'
-    )
-
-    context = {
-        'proveedor': proveedor,
-        'propuestas': propuestas,
-        'rubros_ofertados': rubros_ofertados,
-        'zona_geografica': zona_geografica,
-        'is_online_status': is_online_status,
-        'now': timezone.now(),
-        'current_user': current_logged_in_user,
-    }
-
-    return render(request, 'usuarios/proveedor_perfil.html', context)

@@ -1,20 +1,225 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Mis Productos y Servicios - Proveedor{% endblock %}
+{% block title %}Mis Productos y Servicios - {{ proveedor.nombre_empresa }}{% endblock %}
 
-{% block extra_css %}
+{% block content %}
+<div class="container mt-4">
+    <div class="productos-container">
+        <!-- Header con título y botón -->
+        <div class="page-header mb-4">
+            <div>
+                <h1 class="page-title">📦 Mis Productos y Servicios</h1>
+                <p class="text-muted">Gestiona tu catálogo de productos y servicios</p>
+            </div>
+            <a href="{% url 'proveedores:crear_producto' %}" class="btn btn-primary btn-add">
+                <i class="bi bi-plus-circle"></i> Añadir Nuevo Producto
+            </a>
+        </div>
+
+        <!-- Mensajes -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Filtros -->
+        <div class="filtros-container card mb-4">
+            <div class="card-body">
+                <form method="get" class="filtros-row" id="filtrosForm">
+                    <div class="filtro-group">
+                        <label for="categoria">Categoría</label>
+                        <select name="categoria" id="categoria" class="form-select">
+                            <option value="">Todas las categorías</option>
+                            <option value="COM" {% if categoria_actual == 'COM' %}selected{% endif %}>Comidas</option>
+                            <option value="BEB" {% if categoria_actual == 'BEB' %}selected{% endif %}>Bebestibles</option>
+                            <option value="SAL" {% if categoria_actual == 'SAL' %}selected{% endif %}>Salud y Bienestar</option>
+                            <option value="FER" {% if categoria_actual == 'FER' %}selected{% endif %}>Ferretería</option>
+                            <option value="ABA" {% if categoria_actual == 'ABA' %}selected{% endif %}>Abarrotes</option>
+                        </select>
+                    </div>
+
+                    <div class="filtro-group">
+                        <label for="estado">Estado</label>
+                        <select name="estado" id="estado" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="activo" {% if estado_actual == 'activo' %}selected{% endif %}>Activos</option>
+                            <option value="inactivo" {% if estado_actual == 'inactivo' %}selected{% endif %}>Inactivos</option>
+                        </select>
+                    </div>
+
+                    <div class="filtro-group">
+                        <label for="buscar">Buscar</label>
+                        <input type="text" name="buscar" id="buscar" class="form-control" placeholder="Nombre del producto..." value="{{ buscar_actual|default:'' }}">
+                    </div>
+
+                    <div class="filtro-group">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Filtrar
+                        </button>
+                    </div>
+
+                    {% if categoria_actual or estado_actual or buscar_actual %}
+                    <div class="filtro-group">
+                        <label>&nbsp;</label>
+                        <a href="{% url 'proveedores:lista_productos' %}" class="btn btn-secondary w-100">
+                            <i class="bi bi-x-circle"></i> Limpiar
+                        </a>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        {% if productos %}
+        <!-- Grid de productos -->
+        <div class="productos-grid">
+            {% for producto in productos %}
+            <div class="producto-card">
+                <div class="producto-imagen">
+                    {% if producto.imagen %}
+                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+                    {% else %}
+                        <span class="placeholder"><i class="bi bi-box-seam"></i></span>
+                    {% endif %}
+                    
+                    <span class="producto-estado-badge {% if producto.activo %}badge-activo{% else %}badge-inactivo{% endif %}">
+                        {% if producto.activo %}
+                            <i class="bi bi-check-circle"></i> Activo
+                        {% else %}
+                            <i class="bi bi-x-circle"></i> Inactivo
+                        {% endif %}
+                    </span>
+
+                    {% if producto.destacado %}
+                        <span class="producto-destacado-badge">
+                            <i class="bi bi-star-fill"></i> Destacado
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="producto-content">
+                    <div class="producto-header">
+                        <h3 class="producto-nombre">{{ producto.nombre }}</h3>
+                    </div>
+
+                    <span class="producto-categoria">
+                        <i class="bi bi-tag"></i> {{ producto.get_categorias_display }}
+                    </span>
+
+                    <p class="producto-descripcion">
+                        {{ producto.descripcion|truncatewords:30 }}
+                    </p>
+
+                    <div class="producto-info">
+                        {% if producto.precio_referencia %}
+                        <div class="info-item">
+                            <span class="info-label">
+                                <i class="bi bi-cash"></i> Precio:
+                            </span>
+                            <span class="info-value producto-precio">${{ producto.precio_referencia|floatformat:0 }}</span>
+                        </div>
+                        {% else %}
+                        <div class="info-item">
+                            <span class="info-label">
+                                <i class="bi bi-cash"></i> Precio:
+                            </span>
+                            <span class="info-value text-muted">No especificado</span>
+                        </div>
+                        {% endif %}
+
+                        <div class="info-item">
+                            <span class="info-label">
+                                <i class="bi bi-calendar"></i> Creado:
+                            </span>
+                            <span class="info-value">{{ producto.fecha_creacion|date:"d/m/Y" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="producto-actions">
+                        <a href="{% url 'proveedores:editar_producto' producto.pk %}" class="btn-action btn-edit">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <a href="{% url 'proveedores:eliminar_producto' producto.pk %}" class="btn-action btn-delete" onclick="return confirm('¿Estás seguro de eliminar este producto?')">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginación -->
+        {% if productos.has_other_pages %}
+        <nav aria-label="Paginación de productos" class="mt-5">
+            <ul class="pagination justify-content-center">
+                {% if productos.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ productos.previous_page_number }}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if buscar_actual %}&buscar={{ buscar_actual }}{% endif %}">Anterior</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Anterior</span>
+                    </li>
+                {% endif %}
+
+                {% for num in productos.paginator.page_range %}
+                    {% if productos.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > productos.number|add:'-3' and num < productos.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if buscar_actual %}&buscar={{ buscar_actual }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if productos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ productos.next_page_number }}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if buscar_actual %}&buscar={{ buscar_actual }}{% endif %}">Siguiente</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Siguiente</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <!-- Estado vacío -->
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-box-seam"></i>
+            </div>
+            <h3>No tienes productos registrados</h3>
+            <p>Comienza agregando tus productos y servicios para que los clientes puedan verlos</p>
+            <a href="{% url 'proveedores:crear_producto' %}" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-circle"></i> Crear mi primer producto
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
 <style>
     .productos-container {
         max-width: 1400px;
         margin: 0 auto;
-        padding: 2rem 1rem;
+        padding: 1rem;
     }
 
     .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
         flex-wrap: wrap;
         gap: 1rem;
     }
@@ -23,24 +228,36 @@
         font-size: 2rem;
         font-weight: 700;
         color: #1a1a1a;
+        margin: 0;
     }
 
     .btn-add {
-        background-color: #0095ff;
-        color: white;
         padding: 0.75rem 1.5rem;
-        border-radius: 6px;
-        text-decoration: none;
         font-weight: 600;
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        transition: all 0.2s;
+        white-space: nowrap;
     }
 
-    .btn-add:hover {
-        background-color: #0077cc;
-        transform: translateY(-2px);
+    .filtros-container {
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .filtros-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .filtro-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #333;
+        font-size: 0.9rem;
     }
 
     .productos-grid {
@@ -61,7 +278,7 @@
 
     .producto-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
     }
 
     .producto-imagen {
@@ -82,7 +299,7 @@
     }
 
     .producto-imagen .placeholder {
-        font-size: 4rem;
+        font-size: 5rem;
         color: white;
         opacity: 0.9;
     }
@@ -92,6 +309,19 @@
         top: 12px;
         right: 12px;
         background: rgba(255, 255, 255, 0.95);
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .producto-destacado-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: #ffc107;
+        color: #000;
         padding: 0.4rem 0.8rem;
         border-radius: 20px;
         font-size: 0.75rem;
@@ -113,26 +343,18 @@
         padding: 1.5rem;
     }
 
-    .producto-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: start;
-        margin-bottom: 0.75rem;
-    }
-
     .producto-nombre {
         font-size: 1.25rem;
         font-weight: 700;
         color: #1a1a1a;
-        margin: 0;
-        flex: 1;
+        margin: 0 0 0.75rem 0;
         line-height: 1.3;
     }
 
     .producto-categoria {
         display: inline-block;
-        background: #f0f0f0;
-        color: #666;
+        background: #e9ecef;
+        color: #495057;
         padding: 0.3rem 0.8rem;
         border-radius: 12px;
         font-size: 0.8rem;
@@ -145,10 +367,6 @@
         font-size: 0.95rem;
         line-height: 1.6;
         margin-bottom: 1rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
         min-height: 4.5rem;
     }
 
@@ -178,15 +396,13 @@
     }
 
     .producto-precio {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #0095ff;
+        font-size: 1.3rem;
+        color: #0d6efd;
     }
 
     .producto-actions {
         display: flex;
         gap: 0.75rem;
-        margin-top: 1rem;
     }
 
     .btn-action {
@@ -199,7 +415,10 @@
         font-weight: 600;
         transition: all 0.2s;
         border: none;
-        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
     }
 
     .btn-edit {
@@ -236,6 +455,7 @@
         font-size: 5rem;
         margin-bottom: 1.5rem;
         opacity: 0.5;
+        color: #6c757d;
     }
 
     .empty-state h3 {
@@ -247,59 +467,6 @@
     .empty-state p {
         color: #999;
         margin-bottom: 2rem;
-    }
-
-    /* Filtros */
-    .filtros-container {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 8px;
-        margin-bottom: 2rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-
-    .filtros-row {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-        align-items: end;
-    }
-
-    .filtro-group {
-        flex: 1;
-        min-width: 200px;
-    }
-
-    .filtro-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-        color: #333;
-        font-size: 0.9rem;
-    }
-
-    .filtro-group select,
-    .filtro-group input {
-        width: 100%;
-        padding: 0.6rem;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 0.95rem;
-    }
-
-    .btn-filtrar {
-        background: #0095ff;
-        color: white;
-        padding: 0.6rem 1.5rem;
-        border: none;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .btn-filtrar:hover {
-        background: #0077cc;
     }
 
     @media (max-width: 768px) {
@@ -314,135 +481,15 @@
 
         .btn-add {
             justify-content: center;
+            width: 100%;
         }
 
-        .producto-actions {
-            flex-direction: column;
+        .filtros-row {
+            grid-template-columns: 1fr;
         }
     }
 </style>
-{% endblock %}
 
-{% block content %}
-<div class="container">
-    <div class="productos-container">
-        <div class="page-header">
-            <h1 class="page-title">📦 Mis Productos y Servicios</h1>
-            <a href="{% url 'proveedores:crear_producto' %}" class="btn-add">
-                ➕ Añadir Nuevo Producto
-            </a>
-        </div>
-
-        <!-- Filtros opcionales -->
-        <div class="filtros-container">
-            <form method="get" class="filtros-row">
-                <div class="filtro-group">
-                    <label for="categoria">Categoría</label>
-                    <select name="categoria" id="categoria">
-                        <option value="">Todas las categorías</option>
-                        <option value="alimentos">Alimentos y Comida</option>
-                        <option value="bebidas">Bebidas y Licores</option>
-                        <option value="ropa">Ropa y Accesorios</option>
-                        <option value="hogar">Artículos para el hogar</option>
-                        <option value="servicios">Servicios Profesionales</option>
-                        <option value="otros">Otros / Varios</option>
-                    </select>
-                </div>
-
-                <div class="filtro-group">
-                    <label for="estado">Estado</label>
-                    <select name="estado" id="estado">
-                        <option value="">Todos</option>
-                        <option value="activo">Activos</option>
-                        <option value="inactivo">Inactivos</option>
-                    </select>
-                </div>
-
-                <div class="filtro-group">
-                    <label for="buscar">Buscar</label>
-                    <input type="text" name="buscar" id="buscar" placeholder="Nombre del producto...">
-                </div>
-
-                <button type="submit" class="btn-filtrar">🔍 Filtrar</button>
-            </form>
-        </div>
-
-        {% if productos %}
-        <div class="productos-grid">
-            {% for producto in productos %}
-            <div class="producto-card">
-                <div class="producto-imagen">
-                    {% if producto.imagen %}
-                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
-                    {% else %}
-                        <span class="placeholder">🍽️</span>
-                    {% endif %}
-                    
-                    <span class="producto-estado-badge {% if producto.activo %}badge-activo{% else %}badge-inactivo{% endif %}">
-                        {% if producto.activo %}✓ Activo{% else %}✗ Inactivo{% endif %}
-                    </span>
-                </div>
-
-                <div class="producto-content">
-                    <div class="producto-header">
-                        <h3 class="producto-nombre">{{ producto.nombre }}</h3>
-                    </div>
-
-                    {% if producto.categoria %}
-                    <span class="producto-categoria">
-                        {{ producto.get_categoria_display|default:producto.categoria }}
-                    </span>
-                    {% endif %}
-
-                    <p class="producto-descripcion">
-                        {{ producto.descripcion|default:"Sin descripción disponible" }}
-                    </p>
-
-                    <div class="producto-info">
-                        {% if producto.precio_referencia %}
-                        <div class="info-item">
-                            <span class="info-label">💰 Precio:</span>
-                            <span class="info-value producto-precio">${{ producto.precio_referencia|floatformat:0 }}</span>
-                        </div>
-                        {% endif %}
-
-                        {% if producto.tiempo_preparacion %}
-                        <div class="info-item">
-                            <span class="info-label">⏱️ Tiempo:</span>
-                            <span class="info-value">{{ producto.tiempo_preparacion }} min</span>
-                        </div>
-                        {% endif %}
-
-                        {% if producto.stock %}
-                        <div class="info-item">
-                            <span class="info-label">📦 Stock:</span>
-                            <span class="info-value">{{ producto.stock }} unidades</span>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="producto-actions">
-                        <a href="{% url 'proveedores:editar_producto' producto.id %}" class="btn-action btn-edit">
-                            ✏️ Editar
-                        </a>
-                        <a href="{% url 'proveedores:eliminar_producto' producto.id %}" class="btn-action btn-delete">
-                            🗑️ Eliminar
-                        </a>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <div class="empty-state-icon">📦</div>
-            <h3>No tienes productos registrados</h3>
-            <p>Comienza agregando tus productos y servicios para que los clientes puedan verlos</p>
-            <a href="{% url 'proveedores:crear_producto' %}" class="btn-add">
-                ➕ Crear mi primer producto
-            </a>
-        </div>
-        {% endif %}
-    </div>
-</div>
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 {% endblock %}

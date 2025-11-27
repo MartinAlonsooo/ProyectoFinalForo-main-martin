@@ -10,7 +10,8 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('usuarios.urls')),
+    path('', include('core.urls')),
+    path('usuarios', include('usuarios.urls')),
     path('administrador/', include('administrador.urls')),
     path('proveedores/', include('proveedor.urls', namespace='proveedores')),
 

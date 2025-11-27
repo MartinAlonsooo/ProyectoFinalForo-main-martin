@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registro de Proveedor{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Registro de Proveedor</h3>
+                    <p class="mb-0 small">Completa el formulario para unirte a nuestra plataforma</p>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data" novalidate id="registroForm">
+                        {% csrf_token %}
+                        
+                        <!-- Información Básica -->
+                        <div class="section-header mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-building"></i> Información Básica
+                            </h5>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.nombre_empresa.id_for_label }}" class="form-label">
+                                    {{ form.nombre_empresa.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.nombre_empresa }}
+                                {% if form.nombre_empresa.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.nombre_empresa.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">
+                                    {{ form.email.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.email.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.password.id_for_label }}" class="form-label">
+                                    {{ form.password.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.password }}
+                                {% if form.password.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.password.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Mínimo 6 caracteres</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.password_confirm.id_for_label }}" class="form-label">
+                                    {{ form.password_confirm.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.password_confirm }}
+                                {% if form.password_confirm.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.password_confirm.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                {{ form.descripcion.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.descripcion.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Contacto -->
+                        <div class="section-header mb-4 mt-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-telephone"></i> Información de Contacto
+                            </h5>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.whatsapp.id_for_label }}" class="form-label">
+                                    {{ form.whatsapp.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.whatsapp }}
+                                {% if form.whatsapp.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.whatsapp.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Formato: +56912345678</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.cobertura.id_for_label }}" class="form-label">
+                                    {{ form.cobertura.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.cobertura }}
+                                {% if form.cobertura.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.cobertura.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Ubicación Geográfica -->
+                        <div class="section-header mb-4 mt-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-geo-alt"></i> Ubicación Geográfica
+                            </h5>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.paises.id_for_label }}" class="form-label">
+                                    {{ form.paises.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.paises }}
+                                {% if form.paises.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.paises.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.regiones.id_for_label }}" class="form-label">
+                                    {{ form.regiones.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.regiones }}
+                                {% if form.regiones.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.regiones.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.comunas.id_for_label }}" class="form-label">
+                                    {{ form.comunas.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.comunas }}
+                                {% if form.comunas.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.comunas.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.direccion.id_for_label }}" class="form-label">
+                                {{ form.direccion.label }}
+                            </label>
+                            {{ form.direccion }}
+                            {% if form.direccion.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.direccion.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Categorías -->
+                        <div class="section-header mb-4 mt-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-tags"></i> Categoría de Productos
+                            </h5>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.categorias.id_for_label }}" class="form-label">
+                                {{ form.categorias.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.categorias }}
+                            {% if form.categorias.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.categorias.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Foto de la Empresa -->
+                        <div class="section-header mb-4 mt-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-image"></i> Imagen de la Empresa
+                            </h5>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.foto_empresa.id_for_label }}" class="form-label">
+                                {{ form.foto_empresa.label }}
+                            </label>
+                            <div class="custom-file-upload">
+                                {{ form.foto_empresa }}
+                                <div id="imagePreview" class="mt-3" style="display: none;">
+                                    <img id="preview" src="" alt="Vista previa" class="img-thumbnail" style="max-width: 300px;">
+                                </div>
+                            </div>
+                            {% if form.foto_empresa.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.foto_empresa.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Errores generales del formulario -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Botones -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
+                            <a href="{% url 'proveedores:login' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle"></i> Registrar Proveedor
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3 mb-5">
+                <p>¿Ya tienes una cuenta? <a href="{% url 'proveedores:login' %}" class="fw-bold">Inicia sesión aquí</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border-radius: 0.375rem;
+        border: 1px solid #ced4da;
+        padding: 0.575rem 0.75rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .card {
+        border: none;
+        border-radius: 0.75rem;
+    }
+    
+    .card-header {
+        border-radius: 0.75rem 0.75rem 0 0 !important;
+        padding: 1.5rem;
+    }
+    
+    .section-header h5 {
+        color: #495057;
+        font-weight: 600;
+    }
+    
+    .section-header i {
+        color: #0d6efd;
+        margin-right: 0.5rem;
+    }
+    
+    .text-danger {
+        color: #dc3545 !important;
+    }
+    
+    .form-check-input {
+        cursor: pointer;
+        width: 1.2em;
+        height: 1.2em;
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+        padding-left: 0.5rem;
+    }
+    
+    .form-switch .form-check-input {
+        width: 2.5em;
+    }
+    
+    .custom-file-upload .form-control {
+        cursor: pointer;
+    }
+    
+    .img-thumbnail {
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 2rem;
+    }
+    
+    .invalid-feedback {
+        display: block;
+        margin-top: 0.25rem;
+    }
+</style>
+
+<script>
+// Preview de imagen
+const fotoInput = document.getElementById('{{ form.foto_empresa.id_for_label }}');
+if (fotoInput) {
+    fotoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+// Validación de contraseñas
+document.getElementById('registroForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('{{ form.password.id_for_label }}').value;
+    const passwordConfirm = document.getElementById('{{ form.password_confirm.id_for_label }}').value;
+    
+    if (password !== passwordConfirm) {
+        e.preventDefault();
+        alert('Las contraseñas no coinciden. Por favor verifica.');
+        return false;
+    }
+    
+    if (password.length < 6) {
+        e.preventDefault();
+        alert('La contraseña debe tener al menos 6 caracteres.');
+        return false;
+    }
+});
+
+// Cargar comunas según región seleccionada (si tienes la función API)
+const regionSelect = document.getElementById('id_regiones');
+const comunaSelect = document.getElementById('id_comunas');
+
+if (regionSelect && comunaSelect) {
+    regionSelect.addEventListener('change', function() {
+        const regionId = this.value;
+        
+        // Puedes implementar filtrado dinámico aquí si lo necesitas
+        // Por ahora, todas las comunas están disponibles
+    });
+}
+</script>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+{% endblock %}
