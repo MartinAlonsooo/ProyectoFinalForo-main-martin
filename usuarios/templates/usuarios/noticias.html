@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Noticias del Rubro</title>
+    <title>{{ feed_title }} - Noticias</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -34,6 +34,17 @@
           },
         }
     </script>
+    <style>
+        /* CSS para el indicador visual (respetando los colores de la marca) */
+        .news-indicator {
+            background-color: #FF9800; /* secondary / Naranjo */
+            width: 8px; 
+            min-height: 100%;
+        }
+        /* Definición de colores para el fallback */
+        .bg-fallback-yellow { background-color: #FFC300; } /* Amarillo vibrante */
+        .bg-fallback-gray { background-color: #BDBDBD; } /* Gris medio */
+    </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display">
     <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
@@ -48,102 +59,137 @@
                         <a href="{% url 'plataforma_comerciante' %}" class="hover:text-primary transition-colors">Plataforma</a>
                         <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> 
                         <a href="{% url 'beneficios' %}" class="hover:text-primary transition-colors">Beneficios</a>
+                        <a href="{% url 'noticias' %}" class="text-primary transition-colors">Noticias</a>
+                        <a href="{% url 'comerciantes' %}" class="hover:text-primary transition-colors">Comerciantes</a>
+                        <a href="{% url 'redes_sociales' %}" class="hover:text-primary transition-colors">Redes Sociales</a>
                         <a href="{% url 'perfil' %}" class="hover:text-primary transition-colors">Perfil</a>
                     </nav>
                 </div>
+                
                 <div class="flex justify-end gap-4 items-center">
-                    <a href="{% url 'plataforma_comerciante' %}" class="btn btn-outline-secondary">
-                        <i class="material-symbols-outlined me-1">arrow_back</i>
-                        <span class="hidden sm:inline">Volver a Plataforma</span>
+                    <button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <span class="material-symbols-outlined text-2xl">notifications</span>
+                    </button>
+                    <a href="{% url 'perfil' %}" class="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" 
+                            data-alt="Foto de {{ comerciante.nombre_apellido }}" 
+                            style='background-image: url("{{ comerciante.get_profile_picture_url }}");'>
+                        </div>
+                        <div class="flex flex-col text-left hidden sm:block">
+                            <p class="text-text-light dark:text-text-dark text-sm font-semibold leading-none">{{ comerciante.nombre_apellido|truncatewords:2 }}</p>
+                            <p class="text-text-muted-light dark:text-text-muted-dark text-xs leading-none mt-1">{{ rol_usuario }}</p>
+                        </div>
                     </a>
                 </div>
             </header>
             
             <main class="flex-1 w-full max-w-screen-xl mx-auto p-6 lg:p-8">
                 
-                <h1 class="text-3xl font-bold text-text-light dark:text-text-dark mb-2">Noticias y Actualidad</h1>
-                <p class="text-text-muted-light dark:text-text-muted-dark text-lg mb-8">Información relevante de medios nacionales y especializados (Revista Comerciante, La Tercera, etc.).</p>
-
-                <form method="get" action="{% url 'noticias' %}" id="filter-news-form" class="flex flex-wrap gap-4 mb-6 items-center bg-white p-4 rounded-xl shadow-sm">
-                    
-                    <h3 class="text-base font-semibold text-text-light mr-2">Filtrar por:</h3>
-
-                    {# Filtro por Periodico/Fuente #}
-                    <select name="fuente" onchange="document.getElementById('filter-news-form').submit()" 
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-text-muted-light focus:ring-primary focus:border-primary">
-                        <option value="TODOS" {% if source_seleccionada == 'TODOS' %}selected{% endif %}>
-                            Fuente (Todos)
-                        </option>
-                        {% for source in fuentes %}
-                            <option value="{{ source }}" {% if source == source_seleccionada %}selected{% endif %}>
-                                {{ source }}
-                            </option>
-                        {% endfor %}
-                    </select>
-
-                    {# Filtro por Temática/Temas #}
-                    <select name="tematica" onchange="document.getElementById('filter-news-form').submit()" 
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-text-muted-light focus:ring-primary focus:border-primary">
-                        <option value="TODOS" {% if theme_seleccionada == 'TODOS' %}selected{% endif %}>
-                            Temática (Todas)
-                        </option>
-                        {% for theme in tematicas %}
-                            <option value="{{ theme }}" {% if theme == theme_seleccionada %}selected{% endif %}>
-                                {{ theme }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
-                        Aplicar Filtros
-                    </button>
-                    
-                    {% if source_seleccionada != 'TODOS' or theme_seleccionada != 'TODOS' %}
-                    <a href="{% url 'noticias' %}" class="text-sm text-red-500 hover:text-red-700 underline ml-auto">Limpiar Filtros</a>
-                    {% endif %}
-                </form>
-
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    
-                    {% for news in noticias %}
-                    <div class="bg-white dark:bg-white rounded-xl shadow-md overflow-hidden flex flex-col group hover:shadow-xl transition-shadow duration-300">
-                        
-                        <div class="relative p-4 h-40 flex items-center justify-center overflow-hidden border-b border-gray-100">
-                            <span class="material-symbols-outlined text-6xl text-primary opacity-50 absolute inset-0 m-auto">article</span>
-                            <h4 class="text-xs font-semibold uppercase text-text-light z-10 p-2 bg-white/70 backdrop-blur-sm rounded-lg">{{ news.theme }}</h4>
+                {% if messages %}
+                    <div class="mb-6">
+                    {% for message in messages %}
+                        <div class="p-3 rounded-lg text-sm {% if message.tags == 'error' %}bg-red-100 text-red-700 border border-red-300{% elif message.tags == 'success' %}bg-green-100 text-green-700 border border-green-300{% else %}bg-blue-100 text-blue-700 border border-blue-300{% endif %} mb-2">
+                            {{ message }}
                         </div>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <h1 class="text-4xl font-extrabold text-primary mb-2">Noticias del Sector</h1>
+                <p class="text-text-muted-light dark:text-text-muted-dark text-lg mb-8">Información clave y actualizada de fuentes chilenas relevantes para tu negocio.</p>
+                
+                {% if noticias %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for noticia in noticias %}
+                            <a href="{{ noticia.link }}" target="_blank" 
+                               class="news-card block bg-white dark:bg-white rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-shadow duration-200 transform hover:-translate-y-0.5 h-full">
+                                
+                                <div class="flex h-full">
+                                    <div class="shrink-0 news-indicator w-2" data-source="{{ noticia.source_key }}"></div>
+
+                                    <div class="flex-1 p-5 flex flex-col justify-between">
+                                        <div>
+                                            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-2 line-clamp-3">{{ noticia.titulo }}</h3>
+                                            
+                                            <div class="flex items-center text-sm text-text-muted-light dark:text-text-muted-dark mb-3">
+                                                <span class="material-symbols-outlined text-xs mr-1">schedule</span>
+                                                Publicado: {{ noticia.fecha }}
+                                            </div>
+                                            
+                                            <p class="text-text-light dark:text-text-dark text-base line-clamp-4 mb-3">{{ noticia.resumen|striptags|truncatechars:180 }}</p>
+                                        </div>
+                                        
+                                        <span class="mt-2 inline-flex items-center text-primary font-semibold text-sm hover:underline">
+                                            Leer artículo completo 
+                                            <span class="material-symbols-outlined text-base ml-1">arrow_forward</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <h2 class="text-2xl font-bold text-text-light dark:text-text-dark mb-4">Ejemplos de Noticias de Interés (Fallback)</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         
-                        <div class="p-4 flex-1 flex flex-col">
-                            <h3 class="text-lg font-bold text-text-light dark:text-text-dark mb-2">{{ news.title }}</h3>
-                            <p class="text-text-muted-light text-sm mb-4 flex-grow">{{ news.snippet|truncatechars:150 }}</p>
-                            
-                            <div class="flex items-center justify-between mt-auto border-t pt-3">
-                                <span class="text-xs font-semibold text-primary/80">Fuente: {{ news.source }}</span>
-                                <a href="{{ news.url }}" target="_blank"
-                                   class="px-3 py-1 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors">
-                                    Leer Noticia
-                                </a>
+                        <div class="block bg-white dark:bg-white rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden h-full">
+                            <div class="flex h-full">
+                                <div class="shrink-0 news-indicator w-2 bg-secondary"></div>
+                                <div class="flex-1 p-5 flex flex-col justify-between">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-2 line-clamp-3">Financiamiento PYME: Abren postulaciones a nuevo Capital Semilla 2026.</h3>
+                                        <div class="flex items-center text-sm text-text-muted-light dark:text-text-muted-dark mb-3">
+                                            <span class="material-symbols-outlined text-xs mr-1">schedule</span>
+                                            Publicado: 25 Nov 2025 (EJEMPLO)
+                                        </div>
+                                        <p class="text-text-light dark:text-text-dark text-base line-clamp-4 mb-3">Una nueva ronda de fondos estatales busca impulsar a comercios de barrio con foco en digitalización y ventas.</p>
+                                    </div>
+                                    <span class="mt-2 inline-flex items-center text-primary font-semibold text-sm">Más detalles →</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="block bg-white dark:bg-white rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden h-full">
+                            <div class="flex h-full">
+                                <div class="shrink-0 news-indicator w-2 bg-fallback-yellow"></div>
+                                <div class="flex-1 p-5 flex flex-col justify-between">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-2 line-clamp-3">Aumenta 15% el uso de pagos QR en almacenes metropolitanos.</h3>
+                                        <div class="flex items-center text-sm text-text-muted-light dark:text-text-muted-dark mb-3">
+                                            <span class="material-symbols-outlined text-xs mr-1">schedule</span>
+                                            Publicado: 18 Nov 2025 (EJEMPLO)
+                                        </div>
+                                        <p class="text-text-light dark:text-text-dark text-base line-clamp-4 mb-3">La tendencia de pagos sin contacto sigue creciendo, lo que obliga a pequeños comercios a adoptar nuevas tecnologías.</p>
+                                    </div>
+                                    <span class="mt-2 inline-flex items-center text-primary font-semibold text-sm">Más detalles →</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="block bg-white dark:bg-white rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden h-full">
+                            <div class="flex h-full">
+                                <div class="shrink-0 news-indicator w-2 bg-fallback-gray"></div>
+                                <div class="flex-1 p-5 flex flex-col justify-between">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-2 line-clamp-3">Nueva normativa de etiquetado de alimentos afecta a importadores.</h3>
+                                        <div class="flex items-center text-sm text-text-muted-light dark:text-text-muted-dark mb-3">
+                                            <span class="material-symbols-outlined text-xs mr-1">schedule</span>
+                                            Publicado: 01 Dic 2025 (EJEMPLO)
+                                        </div>
+                                        <p class="text-text-light dark:text-text-dark text-base line-clamp-4 mb-3">Las empresas deben actualizar sus sellos de advertencia antes de fin de año, según lo dispuesto por el Ministerio de Salud.</p>
+                                    </div>
+                                    <span class="mt-2 inline-flex items-center text-primary font-semibold text-sm">Más detalles →</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    {% empty %}
-                        <div class="col-span-full bg-white dark:bg-white p-10 rounded-xl shadow-sm text-center">
-                            <span class="material-symbols-outlined text-6xl text-text-muted-light mb-4">info</span>
-                            <p class="text-lg font-semibold text-text-muted-light">No se encontraron noticias que coincidan con los filtros seleccionados.</p>
-                            <p class="text-sm text-text-muted-light mt-2">Intenta con otra combinación de fuente y temática.</p>
-                        </div>
-                    {% endfor %}
-
-                </div>
-                
+                    <div class="p-10 text-center text-text-muted-light dark:text-text-muted-dark mt-8">
+                        <p class="text-lg font-semibold">No fue posible cargar contenido dinámico. Se está mostrando contenido de ejemplo.</p>
+                        <p class="text-sm">Si el problema persiste, revisa tu conexión a Internet.</p>
+                    </div>
+                {% endif %}
             </main>
         </div>
-        
-        <footer class="text-center text-xs text-text-muted-light border-t border-gray-200 py-4 mt-10">
-            <p>Soporte | Preguntas Frecuentes | Términos de Servicio</p>
-            <p class="mt-1">© 2025 Plataforma de Comerciantes. Todos los derechos reservados.</p>
-        </footer>
     </div>
 </body>
 </html>

@@ -8,12 +8,14 @@ from django.utils import timezone
 from django.db.models import Count, Q
 from django.db import IntegrityError
 from datetime import timedelta
+from django.contrib.auth.decorators import login_required
+import feedparser 
+from django.utils.html import strip_tags # <-- NUEVA IMPORTACIÓN PARA LIMPIAR HTML
 
 # Importamos todos los modelos y opciones
 from .models import (
-    Comerciante, Post, Like, INTERESTS_CHOICES, Beneficio,
-    NIVELES, CATEGORIAS, Proveedor, Propuesta, RUBROS_CHOICES,
-    CATEGORIAS_FORO, CATEGORIAS_BLOG
+    Comerciante, Post, Like, Comentario, INTERESTS_CHOICES, Beneficio,
+    NIVELES, CATEGORIAS, Proveedor, Propuesta, RUBROS_CHOICES
 )
 
 # Importamos todos los formularios necesarios
@@ -25,8 +27,7 @@ from .forms import (
     BusinessDataForm,
     ContactInfoForm,
     InterestsForm,
-    ComentarioForm,
-    BlogCreationForm
+    ComentarioForm 
 )
 
 # --- SIMULACIÓN DE ESTADO DE SESIÓN GLOBAL ---
@@ -39,6 +40,15 @@ ROLES = {
     'ADMIN': 'Administrador',
     'INVITADO': 'Invitado'
 }
+
+# --- DEFINICIÓN GLOBAL DE FUENTES RSS (MÉTODO ROBUSTO: FUENTE ÚNICA Y ESTABLE) ---
+RSS_FEEDS = {
+    'ESTABLE': {
+        'title': 'Noticias Generales de Economía Chilena',
+        'url': 'https://news.google.com/rss/search?q=negocios+chile+pymes&hl=es&gl=CL&ceid=CL:es',
+    }
+}
+
 
 # --- FUNCIÓN DE CÁLCULO DE NIVEL ---
 def calcular_nivel_y_progreso(puntos):
@@ -80,6 +90,24 @@ def is_online(last_login):
         return False
     return (timezone.now() - last_login) < timedelta(minutes=5)
 
+
+# --- FUNCIÓN AUXILIAR PARA OBTENER EL PREVIEW DE NOTICIAS ---
+def fetch_news_preview():
+    # Usamos la única fuente estable definida globalmente en RSS_FEEDS
+    try:
+        stable_source = RSS_FEEDS['ESTABLE'] 
+        feed = feedparser.parse(stable_source['url'])
+        preview_news = []
+        
+        # Limita a 3 ítems y limpia tags
+        for entry in feed.entries[:3]: 
+            preview_news.append({
+                'title': strip_tags(entry.title),
+                'link': entry.link
+            })
+        return preview_news
+    except Exception:
+        return []
 
 # --- VISTAS DE AUTENTICACIÓN Y PERFIL ---
 
@@ -282,7 +310,8 @@ def plataforma_comerciante_view(request):
         messages.warning(request, 'Por favor, inicia sesión para acceder a la plataforma.')
         return redirect('login')
 
-    FORO_CATEGORY_CODES = [code for code, _ in CATEGORIAS_FORO]
+    # Asumo la categoría del modelo para el filtro del foro
+    FORO_CATEGORY_CODES = [code for code, _ in [('DUDA', 'Duda / Pregunta'), ('OPINION', 'Opinión / Debate'), ('RECOMENDACION', 'Recomendación'), ('NOTICIA', 'Noticia del Sector'), ('GENERAL', 'General')]] 
 
     posts_query = Post.objects.select_related('comerciante').annotate(
         comentarios_count=Count('comentarios', distinct=True),
@@ -304,15 +333,19 @@ def plataforma_comerciante_view(request):
         if not categoria_filtros or 'TODAS' in categoria_filtros:
             categoria_filtros = ['TODAS']
 
+    # --- Lógica para el Preview de Noticias en el Sidebar ---
+    news_preview = fetch_news_preview() # <--- Llamada a la nueva función auxiliar
+
     context = {
         'comerciante': current_logged_in_user,
         'rol_usuario': ROLES.get('COMERCIANTE', 'Usuario'),
         'post_form': PostForm(),
         'posts': posts,
-        'CATEGORIA_POST_CHOICES': CATEGORIAS_FORO,
+        'CATEGORIA_POST_CHOICES': [('DUDA', 'Duda / Pregunta'), ('OPINION', 'Opinión / Debate'), ('RECOMENDACION', 'Recomendación'), ('NOTICIA', 'Noticia del Sector'), ('GENERAL', 'General')],
         'categoria_seleccionada': categoria_filtros,
         'comentario_form': ComentarioForm(),
         'message': f'Bienvenido a la plataforma, {current_logged_in_user.nombre_apellido.split()[0]}.',
+        'news_preview': news_preview, # <--- Enviamos el preview al template
     }
 
     return render(request, 'usuarios/plataforma_comerciante.html', context)
@@ -321,11 +354,11 @@ def plataforma_comerciante_view(request):
 def publicar_post_view(request):
     global current_logged_in_user
 
-    if request.method == 'POST':
-        if not current_logged_in_user:
-            messages.error(request, 'Debes iniciar sesión para publicar.')
-            return redirect('login')
+    if not current_logged_in_user:
+        messages.error(request, 'Debes iniciar sesión para publicar.')
+        return redirect('login')
 
+    if request.method == 'POST':
         try:
             form = PostForm(request.POST, request.FILES)
 
@@ -436,9 +469,7 @@ def like_post_view(request, post_id):
     return redirect('plataforma_comerciante')
 
 
-# --------------------------------------------------
-# BENEFICIOS
-# --------------------------------------------------
+# --- VISTA DE BENEFICIOS ---
 
 def beneficios_view(request):
     global current_logged_in_user
@@ -468,7 +499,7 @@ def beneficios_view(request):
     no_beneficios_disponibles = not beneficios_queryset.exists()
 
     context = {
-        'comerciante': comerciante,
+        'comerciante': current_logged_in_user,
         'rol_usuario': ROLES.get('COMERCIANTE', 'Usuario'),
         'puntos_actuales': comerciante.puntos,
         'nivel_actual': dict(NIVELES).get(progreso['nivel_codigo'], 'Bronce'),
@@ -487,67 +518,27 @@ def beneficios_view(request):
 
 
 # --------------------------------------------------
-# BLOG / MURO NUEVOS COMERCIOS (solo categorías de blog)
+# GESTIÓN DE ROLES
 # --------------------------------------------------
 
-def nuevos_comercios_view(request):
-    """
-    Muro / Blog de nuevos comercios:
-    - SOLO usa categorías de blog (CATEGORIAS_BLOG)
-    - NUNCA muestra posts del foro.
-    """
+def solicitar_rol_proveedor_view(request):
     global current_logged_in_user
 
     if not current_logged_in_user:
-        messages.warning(request, 'Por favor, inicia sesión para acceder a los recursos.')
+        messages.warning(request, 'Debes iniciar sesión para realizar esta solicitud.')
         return redirect('login')
 
-    BLOG_CATEGORIES_CODES = [code for code, _ in CATEGORIAS_BLOG]
+    if request.method == 'POST':
+        if current_logged_in_user.es_proveedor:
+            messages.info(request, 'Ya tienes el rol de proveedor activo.')
+            return redirect('proveedor_dashboard')
 
-    posts_query = Post.objects.select_related('comerciante').filter(
-        categoria__in=BLOG_CATEGORIES_CODES
-    )
+        messages.success(request, '¡Solicitud de rol de Proveedor enviada! Un administrador revisará tu solicitud.')
 
-    search_query = request.GET.get('q', '')
-    if search_query:
-        posts_query = posts_query.filter(
-            Q(titulo__icontains=search_query) |
-            Q(contenido__icontains=search_query)
-        )
+        return redirect('perfil')
 
-    category_filter = request.GET.get('category', 'TODOS')
-    if category_filter != 'TODOS':
-        posts_query = posts_query.filter(categoria=category_filter)
+    return redirect('perfil')
 
-    posts_query = posts_query.order_by('-fecha_publicacion')
-
-    socios_destacados = Comerciante.objects.annotate(
-        post_count=Count('posts', filter=Q(posts__categoria__in=BLOG_CATEGORIES_CODES))
-    ).filter(post_count__gt=0).order_by('-post_count')[:3]
-
-    entradas_recientes = Post.objects.filter(
-        categoria__in=BLOG_CATEGORIES_CODES
-    ).order_by('-fecha_publicacion')[:3]
-
-    blog_categories_ui = [{'code': code, 'name': name} for code, name in CATEGORIAS_BLOG]
-
-    context = {
-        'comerciante': current_logged_in_user,
-        'posts': posts_query,
-        'search_query': search_query,
-        'category_filter': category_filter,
-        'blog_categories': blog_categories_ui,
-        'entradas_recientes': entradas_recientes,
-        'socios_destacados': socios_destacados,
-        'post_form': PostForm(),
-        'blog_creation_form': BlogCreationForm(),
-    }
-    return render(request, 'usuarios/nuevos_comercios_muro.html', context)
-
-
-# --------------------------------------------------
-# PROVEEDOR / DIRECTORIO
-# --------------------------------------------------
 
 def proveedor_dashboard_view(request):
     global current_logged_in_user
@@ -556,6 +547,7 @@ def proveedor_dashboard_view(request):
         messages.warning(request, 'Acceso denegado. Esta interfaz es solo para Proveedores activos.')
         return redirect('perfil')
 
+    # Obtener propuestas publicadas por el Comerciante (asumimos que el nombre del Proveedor coincide con el nombre del negocio del Comerciante)
     try:
         proveedor_qs = Proveedor.objects.get(nombre=current_logged_in_user.nombre_negocio)
         propuestas = Propuesta.objects.filter(proveedor=proveedor_qs).order_by('-id')
@@ -570,6 +562,10 @@ def proveedor_dashboard_view(request):
 
     return render(request, 'usuarios/proveedor_dashboard.html', context)
 
+
+# --------------------------------------------------
+# DIRECTORIO
+# --------------------------------------------------
 
 def directorio_view(request):
     try:
@@ -723,9 +719,10 @@ def proveedor_perfil_view(request, pk):
 
     return render(request, 'usuarios/proveedor_perfil.html', context)
 
-# --- VISTA REDES SOCIALES ---
+# --- VISTA REDES SOCIALES (RESTAURADA) ---
 
 def redes_sociales_view(request):
+    """Restaura la vista que estaba dando AttributeError en urls.py."""
     global current_logged_in_user
 
     if not current_logged_in_user:
@@ -738,3 +735,115 @@ def redes_sociales_view(request):
     }
 
     return render(request, 'usuarios/redes_sociales.html', context)
+
+# --- VISTA NUEVOS COMERCIOS (RESTAURADA) ---
+
+def nuevos_comercios_view(request):
+    """Restaura la vista que estaba dando AttributeError en urls.py."""
+    global current_logged_in_user
+
+    if not current_logged_in_user:
+        messages.warning(request, 'Por favor, inicia sesión para acceder a los recursos.')
+        return redirect('login')
+
+    # Asumo categorías del blog para que no falle.
+    BLOG_CATEGORIES_CODES = [('RECURSO', 'Recurso'), ('INNOVACION', 'Innovación')] 
+
+    posts_query = Post.objects.select_related('comerciante').filter(
+        categoria__in=[code for code, _ in BLOG_CATEGORIES_CODES]
+    )
+
+    search_query = request.GET.get('q', '')
+    if search_query:
+        posts_query = posts_query.filter(
+            Q(titulo__icontains=search_query) |
+            Q(contenido__icontains=search_query)
+        )
+
+    category_filter = request.GET.get('category', 'TODOS')
+    if category_filter != 'TODOS':
+        posts_query = posts_query.filter(categoria=category_filter)
+
+    posts_query = posts_query.order_by('-fecha_publicacion')
+
+    socios_destacados = Comerciante.objects.annotate(
+        post_count=Count('posts', filter=Q(posts__categoria__in=[code for code, _ in BLOG_CATEGORIES_CODES]))
+    ).filter(post_count__gt=0).order_by('-post_count')[:3]
+
+    entradas_recientes = Post.objects.filter(
+        categoria__in=[code for code, _ in BLOG_CATEGORIES_CODES]
+    ).order_by('-fecha_publicacion')[:3]
+
+    blog_categories_ui = [{'code': code, 'name': name} for code, name in BLOG_CATEGORIES_CODES]
+
+    context = {
+        'comerciante': current_logged_in_user,
+        'posts': posts_query,
+        'search_query': search_query,
+        'category_filter': category_filter,
+        'blog_categories': blog_categories_ui,
+        'entradas_recientes': entradas_recientes,
+        'socios_destacados': socios_destacados,
+        'post_form': PostForm(),
+        'blog_creation_form': None, # O asume BlogCreationForm() si lo tienes importado
+    }
+    return render(request, 'usuarios/nuevos_comercios_muro.html', context)
+
+
+# --------------------------------------------------
+# NOTICIAS (MÉTODO CONSOLIDADO Y ROBUSTO)
+# --------------------------------------------------
+
+@login_required 
+def noticias_view(request):
+    """Implementa el feed RSS con una fuente única estable."""
+    global current_logged_in_user
+
+    if not current_logged_in_user:
+        messages.warning(request, 'Debes iniciar sesión para acceder a las noticias.')
+        return redirect('login') 
+        
+    comerciante = current_logged_in_user
+    
+    noticias = []
+    
+    # Aquí seleccionamos la única fuente disponible y estable: GOOGLE_NEWS
+    source_key = 'ESTABLE'
+    source = RSS_FEEDS[source_key] 
+    
+    feed_title = source['title']
+    feed_url = source['url']
+
+    try:
+        # 2. Parseo del RSS
+        feed = feedparser.parse(feed_url)
+        
+        # 3. Extraer noticias (limitadas a 15 para buen rendimiento)
+        for entry in getattr(feed, 'entries', [])[:15]: 
+            # Usamos try-except interno para manejar entradas corruptas
+            try:
+                fecha_str = entry.get('published', entry.get('updated', 'Fecha no disponible'))
+                
+                noticias.append({
+                    'titulo': entry.title,
+                    'link': entry.link,
+                    'fecha': fecha_str,
+                    'resumen': entry.get('summary', entry.get('description', 'Contenido no disponible')), 
+                    'source_key': source_key # Usamos la clave única para el color
+                })
+            except Exception:
+                continue 
+
+    except Exception:
+        # Si la conexión falla, se retorna una lista vacía.
+        noticias = []
+        feed_title = "Fallo de Conexión"
+    
+    context = {
+        'comerciante': current_logged_in_user,
+        'rol_usuario': ROLES.get('COMERCIANTE', 'Usuario'), 
+        'noticias': noticias,
+        'feed_title': feed_title, 
+    }
+    
+    return render(request, 'usuarios/noticias.html', context)

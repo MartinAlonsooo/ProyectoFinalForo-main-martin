@@ -56,13 +56,19 @@
                         <a href="{% url 'plataforma_comerciante' %}" class="text-primary transition-colors">Plataforma</a>
                         <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> 
                         <a href="{% url 'beneficios' %}" class="hover:text-primary transition-colors">Beneficios</a>
-                        <a href="{% url 'comerciantes' %}" class="hover:text-primary transition-colors">Comerciantes</a>
-                        <a href="{% url 'redes_sociales' %}" class="hover:text-primary transition-colors">Redes Sociales</a>
-
                         <a href="{% url 'perfil' %}" class="hover:text-primary transition-colors">Perfil</a>
                     </nav>
                 </div>
-                
+                <div class="flex-1 max-w-lg mx-auto">
+                    <label class="flex flex-col min-w-40 !h-10 max-w-full">
+                        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                            <div class="text-text-muted-light dark:text-text-muted-dark flex border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 items-center justify-center pl-4 rounded-l-lg border-r-0">
+                                <span class="material-symbols-outlined">search</span>
+                            </div>
+                            <input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary h-full placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Buscar en la plataforma..." value=""/>
+                        </div>
+                    </label>
+                </div>
                 <div class="flex justify-end gap-4 items-center">
                     <button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
                         <span class="material-symbols-outlined text-2xl">notifications</span>
@@ -312,22 +318,35 @@
 
                     <aside class="col-span-12 lg:col-span-3 order-3">
                         <div class="space-y-8">
+                            
                             <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
-                                <h3 class="text-text-light dark:text-text-dark text-lg font-bold mb-4">Últimas Noticias</h3>
+                                <h3 class="text-text-light dark:text-text-dark text-lg font-bold mb-4 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary text-xl">feed</span>
+                                    Noticias y Medios
+                                </h3>
+                                
                                 <div class="space-y-4">
-                                    <div class="flex gap-4 items-center">
-                                        <img class="w-20 h-20 object-cover rounded-lg" data-alt="People in a meeting room" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDw4lC1vSvwceI-qO4vPrManCM4dXbqa79FpaZGZRXJVq3cs4Bm294sTJndABNYnOHpWfm-3QczNaSIYsJMM-M3Ff3teeR5pJR1sOjLSe5f5avdSCCT8z1iIJlf5qhYI7AsJqFbzG1hqj5N5TLX-BV20NBaDUgMSsTIrWIvjVlKe1FFJlnvB-9TVSCGFhfVIdQ3naPfljcnsOR0w13jsFF395orHcaRhHSthWU9M5h6LR1q4BZJgmBfi0hGbpddmYeOW1TAyCU7GQ"/>
-                                        <div>
-                                            <p class="text-text-light dark:text-text-dark font-semibold text-sm leading-tight">Ayuntamiento lanza nuevas ayudas para el comercio local</p>
-                                            <a class="text-primary text-xs font-bold mt-1 inline-block" href="#">Leer más</a>
-                                        </div>
-                                    </div>
-                                    <div class="flex gap-4 items-center">
-                                        <img class="w-20 h-20 object-cover rounded-lg" data-alt="Person paying with a phone" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSSAxeP4eS2YJLWORYxKZ2D94v4mIbwiqjqgP1xX19yT6dmL2jb-Axv4MosM37ZE99DSfZveQgpm-itm8NYhOXWaxqVrcoxL20U25I-Ll2QVtBmj8U1G_3f1u5HlblZ-FWOO75589irXaVHkF-GXtpEvfg13Hhu3V3vic0_VWgonvuYaPygNJ9boA20hRWkHx7zZQQS8brKPopoAzPB-lbW9ipOv1RcHx_03Yfsa6QFFSl--Br8nVu-r6On8FwpIhFaBbsUikmvw"/>
-                                        <div>
-                                            <p class="text-text-light dark:text-text-dark font-semibold text-sm leading-tight">Tendencias de consumo para el próximo trimestre</p>
-                                            <a class="text-primary text-xs font-bold mt-1 inline-block" href="#">Leer más</a>
-                                        </div>
+                                    {% if news_preview %}
+                                        {% for item in news_preview %}
+                                            <div class="flex items-start">
+                                                <span class="material-symbols-outlined text-secondary text-base mr-2 mt-1">lens_blur</span>
+                                                <div>
+                                                    <a href="{{ item.link }}" target="_blank" class="text-text-light dark:text-text-dark font-semibold text-sm leading-snug hover:text-primary transition-colors">
+                                                        {{ item.title|truncatechars:70 }}
+                                                    </a>
+                                                    <p class="text-text-muted-light text-xs mt-1">Fuente: Noticias</p>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-text-muted-light text-sm">Accede a feeds de LUN, La Estrella y revistas del rubro, actualizadas automáticamente.</p>
+                                    {% endif %}
+                                    
+                                    <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
+                                        <a class="text-primary text-sm font-bold mt-1 inline-flex items-center hover:underline" href="{% url 'noticias' %}">
+                                            Ver todas las fuentes 
+                                            <span class="material-symbols-outlined text-base ml-1">arrow_forward</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -341,7 +360,6 @@
                                         </div>
                                         <div>
                                             <p class="text-text-light dark:text-text-dark font-semibold">Taller Online: Marketing en Redes Sociales</p>
-                                            <p class="text-text-muted-light dark:text-text-muted-dark text-sm">18:00 - Online</p>
                                             <a class="text-primary text-xs font-bold mt-1 inline-block" href="#">Ver detalles</a>
                                         </div>
                                     </div>
@@ -352,7 +370,6 @@
                                         </div>
                                         <div>
                                             <p class="text-text-light dark:text-text-dark font-semibold">Reunión Mensual de Comerciantes - Zona Centro</p>
-                                            <p class="text-text-muted-light dark:text-text-muted-dark text-sm">19:30 - Centro Cívico</p>
                                             <a class="text-primary text-xs font-bold mt-1 inline-block" href="#">Ver detalles</a>
                                         </div>
                                     </div>
@@ -404,7 +421,7 @@
             <div>
                 <label for="{{ post_form.contenido.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ post_form.contenido.label }}</label>
                 <textarea name="{{ post_form.contenido.name }}" id="{{ post_form.contenido.id_for_label }}"
-                    placeholder="Escribe aquí el contenido de tu publicación..." rows="5"
+                    placeholder="Escribe tu comentario..." rows="5"
                     class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark p-[10px] text-base font-normal leading-normal max-h-48 min-h-24">
                 </textarea>
                 {% for error in post_form.contenido.errors %}

@@ -33,4 +33,5 @@ urlpatterns = [
     path('post/<int:post_id>/like/', views.like_post_view, name='like_post'),
 
     path('redes-sociales/', views.redes_sociales_view, name='redes_sociales'),
+    path('noticias/', views.noticias_view, name='noticias'),
 ]
