@@ -45,8 +45,12 @@ INTERESTS_CHOICES = [
     ('SEGUROS', 'Seguros para Negocios'),
 ]
 
-# Categorías para publicaciones del foro
-CATEGORIA_POST_CHOICES = [
+# --------------------------------------------------
+# CATEGORÍAS DE PUBLICACIONES (FORO + BLOG)
+# --------------------------------------------------
+
+# Categorías para publicaciones del FORO (primera imagen)
+CATEGORIAS_FORO = [
     ('DUDA', 'Duda / Pregunta'),
     ('OPINION', 'Opinión / Debate'),
     ('RECOMENDACION', 'Recomendación'),
@@ -54,7 +58,27 @@ CATEGORIA_POST_CHOICES = [
     ('GENERAL', 'General'),
 ]
 
-# Categorías para beneficios
+# Categorías para publicaciones del BLOG / Muro Nuevos Comercios (segunda imagen)
+CATEGORIAS_BLOG = [
+    ('AYUDA_SOPORTE', 'Ayuda y Soporte'),
+    ('GESTION_NEGOCIO', 'Gestión del Negocio'),
+    ('MARKETING_VENTAS', 'Marketing y Ventas'),
+    ('ATENCION_CLIENTE', 'Atención al Cliente'),
+    ('TECNOLOGIA_COMERCIANTES', 'Tecnología para Comerciantes'),
+    ('LEGAL_TRAMITES', 'Legal y Trámites'),
+    ('INSPIRACION_EXITO', 'Inspiración y Casos de Éxito'),
+    ('PROVEEDORES_ABASTO', 'Proveedores y Abastecimiento'),
+    ('TENDENCIAS_COMERCIO', 'Tendencias del Comercio'),
+    ('SALUD_EMPRENDEDOR', 'Salud del Emprendedor'),
+]
+
+# Unión de ambos grupos para el modelo Post
+CATEGORIA_POST_CHOICES = CATEGORIAS_FORO + CATEGORIAS_BLOG
+
+# --------------------------------------------------
+# Categorías para beneficios (NO se tocan)
+# --------------------------------------------------
+
 CATEGORIAS = [
     ('DESCUENTO', 'Descuento y Ofertas'),
     ('SORTEO', 'Sorteos y Rifas'),

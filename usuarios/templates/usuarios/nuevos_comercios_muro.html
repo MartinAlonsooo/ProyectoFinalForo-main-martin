@@ -34,16 +34,6 @@
           },
         }
     </script>
-    
-    <style>
-        .off-canvas-panel {
-            transition: transform 0.3s ease-in-out;
-            transform: translateX(100%); /* Oculto a la derecha */
-        }
-        .off-canvas-panel.active {
-            transform: translateX(0); /* Visible */
-        }
-    </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display">
     <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
@@ -59,6 +49,7 @@
                         <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> 
                         <a href="{% url 'beneficios' %}" class="hover:text-primary transition-colors">Beneficios</a>
                         <a href="{% url 'comerciantes' %}" class="text-primary transition-colors">Comerciantes</a>
+                        <a href="{% url 'redes_sociales' %}" class="hover:text-primary transition-colors">Redes Sociales</a>
                         <a href="{% url 'perfil' %}" class="hover:text-primary transition-colors">Perfil</a>
                     </nav>
                 </div>
@@ -88,13 +79,9 @@
 
                 <div class="grid grid-cols-12 gap-8">
                     
+                    <!-- SECCIÓN PRINCIPAL: SOLO LECTURA -->
                     <section class="col-span-12 lg:col-span-8 order-1">
                         <div class="space-y-8">
-                            
-                            <button onclick="document.getElementById('off-canvas-publicar').classList.add('active');" 
-                                class="min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-secondary text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] hover:bg-secondary/90 transition-colors duration-200 mb-6">
-                                <span class="truncate">Crear Publicación</span>
-                            </button>
                             
                             {# FEED PRINCIPAL DEL BLOG (FILTRADO) #}
                             {% for post in posts %}
@@ -156,10 +143,11 @@
                             <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
                                 <h3 class="text-text-light dark:text-text-dark text-lg font-bold mb-4">Categorías</h3>
                                 <div class="flex flex-wrap gap-2">
+                                    <a href="{% url 'comerciantes' %}?category=TODOS" class="px-3 py-1 text-sm rounded-full {% if category_filter == 'TODOS' %} bg-primary text-white {% else %} bg-gray-200 text-text-light hover:bg-primary/20 hover:text-primary {% endif %}">Todas</a>
                                     {% for cat in blog_categories %}
                                         {% with category_code=cat.code %}
                                             <a href="{% url 'comerciantes' %}?category={{ category_code }}" class="px-3 py-1 text-sm rounded-full 
-                                                {% if category_code == category_filter %} bg-primary text-white {% elif category_code == 'NUEVOS_SOCIOS' %} bg-secondary text-white {% else %} bg-gray-200 text-text-light hover:bg-primary/20 hover:text-primary {% endif %}">
+                                                {% if category_code == category_filter %} bg-primary text-white {% else %} bg-gray-200 text-text-light hover:bg-primary/20 hover:text-primary {% endif %}">
                                                 {{ cat.name }}
                                             </a>
                                         {% endwith %}
@@ -172,7 +160,10 @@
                                 <h3 class="text-text-light dark:text-text-dark text-lg font-bold mb-4">Entradas Recientes</h3>
                                 <div class="space-y-3 text-sm">
                                     {% for post in entradas_recientes %}
-                                        <p><a href="{% url 'post_detail' post_id=post.id %}" class="font-semibold hover:text-primary">{{ post.titulo }}</a><br><span class="text-xs text-text-muted-light">{{ post.fecha_publicacion|date:"d de F, Y" }}</span></p>
+                                        <p>
+                                            <a href="{% url 'post_detail' post_id=post.id %}" class="font-semibold hover:text-primary">{{ post.titulo }}</a><br>
+                                            <span class="text-xs text-text-muted-light">{{ post.fecha_publicacion|date:"d de F, Y" }}</span>
+                                        </p>
                                     {% empty %}
                                         <p class="text-xs text-text-muted-light">No hay entradas recientes.</p>
                                     {% endfor %}
@@ -202,65 +193,5 @@
             </main>
         </div>
     </div>
-    
-    {# Formulario de publicación off-canvas (Simplificado) #}
-    <div id="off-canvas-publicar" class="off-canvas-panel fixed top-0 right-0 w-full sm:w-1/2 lg:w-1/3 h-full bg-white dark:bg-white z-50 shadow-2xl overflow-y-auto p-6 flex flex-col">
-        <div class="flex justify-between items-center pb-4 mb-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-2xl font-bold text-text-light dark:text-text-dark">Crear Nueva Publicación</h3>
-            <button onclick="document.getElementById('off-canvas-publicar').classList.remove('active');" 
-                    class="text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors">
-                <span class="material-symbols-outlined text-3xl">close</span>
-            </button>
-        </div>
-
-        <form method="POST" action="{% url 'crear_publicacion' %}" enctype="multipart/form-data" class="space-y-4 flex-grow flex flex-col">
-            {% csrf_token %}
-            
-            <div>
-                <label for="{{ post_form.titulo.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ post_form.titulo.label }}</label>
-                {{ post_form.titulo }}
-                {% for error in post_form.titulo.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div>
-                <label for="{{ post_form.categoria.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ post_form.categoria.label }}</label>
-                {{ post_form.categoria }}
-                {% for error in post_form.categoria.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div>
-                <label for="{{ post_form.contenido.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ post_form.contenido.label }}</label>
-                {{ post_form.contenido }}
-                {% for error in post_form.contenido.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div>
-                <label for="{{ post_form.uploaded_file.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ post_form.uploaded_file.label }}</label>
-                {{ post_form.uploaded_file }}
-                {% for error in post_form.uploaded_file.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                {% endfor %}
-            </div>
-            
-            {# Campos Ocultos para cumplir con la simplificación de UI #}
-            <div class="hidden">
-                {{ post_form.url_link }}
-                {{ post_form.etiquetas_input }}
-            </div>
-
-            <div class="pt-4 mt-auto border-t border-gray-200 dark:border-gray-700">
-                <button type="submit" class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-secondary text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] hover:bg-secondary/90 transition-colors duration-200">
-                    <span class="truncate">Publicar Blog</span>
-                </button>
-            </div>
-        </form>
-    </div>
-
 </body>
-</html>s
+</html>

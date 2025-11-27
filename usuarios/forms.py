@@ -1,11 +1,10 @@
-# usuarios/forms.py (CONTENIDO COMPLETO MODIFICADO)
-
 from django import forms
 from .models import (
-    Comerciante, Post, Comentario, Like, 
-    RELACION_NEGOCIO_CHOICES, TIPO_NEGOCIO_CHOICES, 
-    CATEGORIA_POST_CHOICES, INTERESTS_CHOICES
-) 
+    Comerciante, Post, Comentario, Like,
+    RELACION_NEGOCIO_CHOICES, TIPO_NEGOCIO_CHOICES,
+    INTERESTS_CHOICES, CATEGORIAS_FORO, CATEGORIAS_BLOG
+)
+
 # Opciones de comuna
 COMUNA_CHOICES = [
     ('', 'Selecciona tu comuna'),
@@ -17,30 +16,8 @@ COMUNA_CHOICES = [
     ('OTRO_COMUNA', '...'),
 ]
 
-# Definición extendida de categorías para el PostForm (incluyendo las 10 del Blog)
-# NOTA: Esta lista DEBE ser compatible con las choices del modelo Post.categoria en models.py
-COMPREHENSIVE_POST_CHOICES = [
-    # Categorías para el Foro (Discusión)
-    ('DUDA', 'Duda / Pregunta'),
-    ('OPINION', 'Opinión / Debate'),
-    ('RECOMENDACION', 'Recomendación'),
-    ('NOTICIA', 'Noticia del Sector'),
-    ('GENERAL', 'General'),
-    # Categorías específicas del Blog/Muro (Nuevos Comercios)
-    ('AYUDA_SOPORTE', 'Ayuda y Soporte'),
-    ('GESTION_NEGOCIO', 'Gestión del Negocio'),
-    ('MARKETING_VENTAS', 'Marketing y Ventas'),
-    ('ATENCION_CLIENTE', 'Atención al Cliente'),
-    ('TECNOLOGIA', 'Tecnología para Comerciantes'),
-    ('LEGAL_TRAMITES', 'Legal y Trámites'),
-    ('INSPIRACION_EXITO', 'Inspiración y Casos de Éxito'),
-    ('PROVEEDORES_ABASTO', 'Proveedores y Abastecimiento'),
-    ('TENDENCIAS_COMERCIO', 'Tendencias del Comercio'),
-    ('SALUD_EMPRENDEDOR', 'Salud del Emprendedor'),
-]
-
-# Lista simplificada para el desplegable del Blog/Muro (10 categorías)
-BLOG_SPECIFIC_CHOICES = COMPREHENSIVE_POST_CHOICES[5:]
+# Lista simplificada para el BLOG/Muro (10 categorías)
+BLOG_SPECIFIC_CHOICES = CATEGORIAS_BLOG
 
 
 class RegistroComercianteForm(forms.ModelForm):
@@ -90,6 +67,7 @@ class RegistroComercianteForm(forms.ModelForm):
 
         return cleaned_data
 
+
 # ✅ Formulario de Login separado
 class LoginForm(forms.Form):
     email = forms.EmailField(
@@ -107,19 +85,19 @@ class LoginForm(forms.Form):
         })
     )
 
+
 # -------------------------------------------------------------------------------------
 class PostForm(forms.ModelForm):
-    # Campo para subida de archivo desde PC (NUEVA FUNCIONALIDAD)
+    # Campo para subida de archivo desde PC
     uploaded_file = forms.FileField(
         required=False,
         label='Subir Archivo (Imagen/Documento)',
         widget=forms.ClearableFileInput(attrs={
-            # Estilos de Tailwind para el campo de archivo
             'class': 'form-input-file block w-full text-sm text-text-light file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 dark:file:bg-primary dark:file:text-white',
         })
     )
 
-    # Campo para link/URL externo (NUEVA FUNCIONALIDAD)
+    # Campo para link/URL externo
     url_link = forms.URLField(
         required=False,
         label='Link URL',
@@ -129,7 +107,7 @@ class PostForm(forms.ModelForm):
         })
     )
     
-    # Campo para etiquetas (se mantiene)
+    # Campo para etiquetas
     etiquetas_input = forms.CharField(
         required=False,
         label='Etiquetas',
@@ -142,8 +120,7 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = ('titulo', 'contenido', 'categoria') 
-        
+        fields = ('titulo', 'contenido', 'categoria')
         widgets = {
             'titulo': forms.TextInput(attrs={
                 'placeholder': 'Titulo',
@@ -156,8 +133,16 @@ class PostForm(forms.ModelForm):
             }),
             'categoria': forms.Select(attrs={
                 'class': 'form-select flex w-full min-w-0 flex-1 rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary h-12 placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark p-[10px] text-base font-normal leading-normal'
-            }, choices=COMPREHENSIVE_POST_CHOICES), # <--- USA LAS CATEGORÍAS EXTENDIDAS
+            }),
         }
+
+    def __init__(self, *args, **kwargs):
+        """
+        Este formulario se usa en el FORO.
+        Aquí dejamos SOLO las categorías del foro (no las del blog).
+        """
+        super().__init__(*args, **kwargs)
+        self.fields['categoria'].choices = CATEGORIAS_FORO
 
     def clean(self):
         cleaned_data = super().clean()
@@ -177,12 +162,14 @@ class PostForm(forms.ModelForm):
         
         return cleaned_data
     
+
 class ProfilePhotoForm(forms.ModelForm):
     """Formulario para actualizar solo la foto de perfil."""
     class Meta:
         model = Comerciante
         fields = ['foto_perfil']
         
+
 class BusinessDataForm(forms.ModelForm):
     """Formulario para actualizar los datos del negocio (Relación, Tipo, Comuna, Nombre)."""
     class Meta:
@@ -196,6 +183,7 @@ class BusinessDataForm(forms.ModelForm):
             'nombre_negocio': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white', 'placeholder': 'Ej: Minimarket El Sol'}),
         }
 
+
 class ContactInfoForm(forms.ModelForm):
     """Formulario para actualizar el email y WhatsApp."""
     class Meta:
@@ -207,9 +195,9 @@ class ContactInfoForm(forms.ModelForm):
             'whatsapp': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white', 'placeholder': '+569XXXXXXXX'}),
         }
 
+
 class InterestsForm(forms.Form):
     """Formulario para seleccionar múltiples intereses de la lista definida."""
-    
     intereses = forms.MultipleChoiceField(
         choices=INTERESTS_CHOICES,
         widget=forms.CheckboxSelectMultiple,
@@ -217,7 +205,6 @@ class InterestsForm(forms.Form):
         label="Selecciona tus intereses"
     )
 
-# --- FORMULARIO DE COMENTARIOS RESTAURADO ---
 
 class ComentarioForm(forms.ModelForm):
     """Formulario para añadir un nuevo comentario."""
@@ -242,7 +229,6 @@ class BlogCreationForm(PostForm):
     """Formulario para crear posts del Blog/Muro, limitado a 10 categorías."""
     
     class Meta(PostForm.Meta):
-        # Campos que queremos mostrar en el blog (solo título, contenido, categoría, y uploaded_file/imagen)
         fields = ('titulo', 'contenido', 'categoria', 'uploaded_file',) 
         
     def __init__(self, *args, **kwargs):

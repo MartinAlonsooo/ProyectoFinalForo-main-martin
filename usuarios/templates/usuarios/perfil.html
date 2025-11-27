@@ -121,25 +121,18 @@
                                     {% endif %}
                                 </div>
                                 
+                                {% if comerciante.es_proveedor %}
                                 <div class="border-t pt-4">
                                     <h3 class="text-lg font-bold text-text-light dark:text-text-dark mb-4">Gestión de Roles</h3>
                                     
-                                    {% if comerciante.es_proveedor %}
-                                        <p class="text-sm font-semibold text-green-600 mb-3">Rol de Proveedor: ¡ACTIVO!</p>
-                                        <a href="{% url 'proveedor_dashboard' %}" 
-                                           class="w-full inline-flex items-center justify-center p-2 bg-secondary text-white text-sm font-bold rounded-lg hover:bg-secondary/90 transition-colors">
-                                            Ir al Dashboard de Proveedor
-                                        </a>
-                                    {% else %}
-                                        <p class="text-sm text-text-muted-light mb-3">¿Deseas ofrecer tus insumos o servicios a otros comerciantes?</p>
-                                        <form method="POST" action="{% url 'solicitar_proveedor' %}">
-                                            {% csrf_token %}
-                                            <button type="submit" class="w-full p-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
-                                                Solicitar Rol de Proveedor
-                                            </button>
-                                        </form>
-                                    {% endif %}
+                                    <p class="text-sm font-semibold text-green-600 mb-3">Rol de Proveedor: ¡ACTIVO!</p>
+                                    <a href="{% url 'proveedor_dashboard' %}" 
+                                       class="w-full inline-flex items-center justify-center p-2 bg-secondary text-white text-sm font-bold rounded-lg hover:bg-secondary/90 transition-colors">
+                                        Ir al Dashboard de Proveedor
+                                    </a>
                                 </div>
+                                {% endif %}
+                                
                                 <div class="border-t pt-4">
                                     <div class="flex justify-between items-center mb-4">
                                         <h3 class="text-lg font-bold text-text-light dark:text-text-dark">Datos Personales</h3>
@@ -220,10 +213,120 @@
         </div>
     </div>
     
-    <div id="editPhotoModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">...</div>
-    <div id="editContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">...</div>
-    <div id="editBusinessModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">...</div>
-    <div id="editInterestsModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">...</div>
+    {# --- MODALES DE EDICIÓN RESTAURADOS --- #}
+
+    {# Modal 1: Editar Foto #}
+    <div id="editPhotoModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
+        <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4 border-b pb-2">Cambiar Foto de Perfil</h3>
+            <form method="POST" action="{% url 'perfil' %}" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_photo">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-text-light dark:text-text-dark mb-1" for="{{ photo_form.foto_perfil.id_for_label }}">Subir nueva foto:</label>
+                    {{ photo_form.foto_perfil }}
+                    {% for error in photo_form.foto_perfil.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('editPhotoModal')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">Guardar Foto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# Modal 2: Editar Datos Personales/Contacto #}
+    <div id="editContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
+        <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4 border-b pb-2">Editar Contacto</h3>
+            <form method="POST" action="{% url 'perfil' %}" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_contact">
+                
+                <div class="space-y-4">
+                    {% for field in contact_form %}
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-text-light dark:text-text-dark mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('editContactModal')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# Modal 3: Editar Datos del Negocio #}
+    <div id="editBusinessModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
+        <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4 border-b pb-2">Editar Datos del Negocio</h3>
+            <form method="POST" action="{% url 'perfil' %}" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_business">
+                
+                <div class="space-y-4">
+                    {% for field in business_form %}
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-text-light dark:text-text-dark mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('editBusinessModal')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# Modal 4: Editar Intereses #}
+    <div id="editInterestsModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
+        <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-lg">
+            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4 border-b pb-2">Editar Intereses</h3>
+            <form method="POST" action="{% url 'perfil' %}" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_interests">
+                
+                <div class="space-y-4">
+                    <p class="text-sm text-text-muted-light mb-3">Selecciona los temas de la comunidad que te interesan:</p>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {% for choice in interests_form.intereses.field.choices %}
+                            <label class="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
+                                <input type="checkbox" name="{{ interests_form.intereses.name }}" value="{{ choice.0 }}" 
+                                       class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
+                                       {% if choice.0 in intereses_actuales_codigos %}checked{% endif %}>
+                                <span class="text-sm text-text-light dark:text-text-dark">{{ choice.1 }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                    {% for error in interests_form.intereses.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('editInterestsModal')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">Guardar Intereses</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
 
     <script>
@@ -245,20 +348,19 @@
         });
 
         // Simulación de precarga de foto para modal (opcional)
-        document.getElementById('id_foto_perfil').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                document.getElementById('fileNameDisplay').textContent = file.name;
-            } else {
-                document.getElementById('fileNameDisplay').textContent = 'Haz clic para subir una foto';
-            }
-        });
+        const fotoInput = document.getElementById('id_foto_perfil');
+        if (fotoInput) {
+            fotoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    console.log('Archivo seleccionado:', file.name);
+                }
+            });
+        }
         
         // FUNCIÓN: Confirma el cierre de sesión antes de redirigir
         function confirmLogout() {
-            // Muestra la ventana de confirmación nativa
             if (window.confirm("¿Estás seguro de que quieres cerrar la sesión?")) {
-                // Si el usuario confirma, redirige al URL de logout de Django
                 window.location.href = "{% url 'logout' %}";
             }
         }
