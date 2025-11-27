@@ -36,21 +36,27 @@
     </script>
 
     <style>
-        /* Estilos de la barra de progreso */
-        .progress-bar-container {
-            height: 8px;
-            background-color: #E0E7FF; 
-            border-radius: 9999px;
-            overflow: hidden;
-        }
-        .progress-bar {
+        /* Estilos generales de la página */
+        .placeholder-icon-benefit {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
             height: 100%;
-            background-color: #FF9800; 
-            transition: width 0.5s ease-in-out;
+            font-size: 4rem; 
+            color: rgba(0, 90, 156, 0.7); 
         }
-        .progress-label {
-            font-size: 0.75rem; 
-            font-weight: 600;
+        /* Colores de fondo para placeholders por categoría */
+        .bg-placeholder-CAPACITACION { background-color: #E6F3FF; }
+        .bg-placeholder-DESCUENTO { background-color: #FFF8E6; }
+        .bg-placeholder-SORTEO { background-color: #E6FFE6; }
+        .bg-placeholder-EVENTO { background-color: #FFEEEC; }
+        .bg-placeholder-OTROS { background-color: #F8F8F8; }
+        
+        /* Estilo para los iconos de progreso */
+        .progress-emoji {
+            font-size: 1.5rem; /* Iconos más grandes */
+            line-height: 1;
         }
     </style>
 </head>
@@ -65,18 +71,11 @@
                     </div>
                     <nav class="hidden md:flex gap-6 text-text-muted-light dark:text-text-muted-dark font-semibold text-sm">
                         <a href="{% url 'plataforma_comerciante' %}" class="hover:text-primary transition-colors">Plataforma</a>
-                        <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> 
                         <a href="{% url 'beneficios' %}" class="text-primary transition-colors">Beneficios</a>
-                        <a href="{% url 'comerciantes' %}" class="hover:text-primary transition-colors">Comerciantes</a>
-                        <a href="{% url 'redes_sociales' %}" class="hover:text-primary transition-colors">Redes Sociales</a>
-
                         <a href="{% url 'perfil' %}" class="hover:text-primary transition-colors">Perfil</a>
                     </nav>
                 </div>
                 <div class="flex justify-end gap-4 items-center">
-                    <button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <span class="material-symbols-outlined text-2xl">notifications</span>
-                    </button>
                     <div class="flex max-w-[480px] items-center justify-center overflow-hidden rounded-lg h-10 w-auto p-2 bg-gray-100 dark:bg-gray-700 text-text-light dark:text-text-dark">
                         <span class="material-symbols-outlined text-xl mr-1 text-secondary">star</span>
                         <span class="text-sm font-semibold">{{ puntos_actuales|default:0 }} Ptos.</span>
@@ -92,50 +91,75 @@
             
             <main class="flex-1 w-full max-w-screen-xl mx-auto p-6 lg:p-8">
                 
-                <h1 class="text-3xl font-bold text-text-light dark:text-text-dark mb-2">Descubre los Beneficios y Potencia tu Negocio</h1>
-                <p class="text-text-muted-light dark:text-text-muted-dark text-lg mb-8">Concursos, sorteos, descuentos y un sistema de puntos acumulables para ti.</p>
+                <h1 class="text-3xl font-bold text-text-light dark:text-text-dark mb-2">Catálogo de Beneficios Exclusivos</h1>
+                <p class="text-text-muted-light dark:text-text-muted-dark text-lg mb-8">
+                    Descuentos, sorteos y acceso a capacitación para potenciar tu negocio.
+                </p>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
                     
-                    <div class="col-span-1 lg:col-span-2 bg-white dark:bg-white p-6 rounded-xl shadow-md flex items-center gap-6">
-                        <div class="w-20 h-20 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
-                            <span class="material-symbols-outlined text-4xl text-gray-500">workspace_premium</span>
+                    <div class="col-span-1 lg:col-span-1 bg-white dark:bg-white p-6 rounded-xl shadow-md flex flex-col justify-between border-t-4 border-secondary">
+                        
+                        <div class="mb-4">
+                            <p class="text-sm font-medium text-text-muted-light">Mi Nivel Actual</p>
+                            <h2 class="text-4xl font-extrabold text-primary my-2 flex items-center justify-center">
+                                {{ nivel_actual }} 
+                                <span class="material-symbols-outlined text-4xl ml-2 text-secondary">workspace_premium</span>
+                            </h2>
+                            <p class="text-lg font-bold text-text-light dark:text-text-dark">
+                                {{ puntos_actuales|default:0 }} Puntos
+                            </p>
                         </div>
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-text-muted-light">Nivel: {{ nivel_actual }}</p>
-                            <h2 class="text-5xl font-extrabold text-primary my-2">{{ puntos_actuales|default:0 }}</h2>
-                            <p class="text-lg font-bold text-text-light dark:text-text-dark mb-4">Mis Puntos</p>
-                            <button class="px-5 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
-                                Ver catálogo de premios
-                            </button>
-                        </div>
+                        
+                        <button class="px-5 py-2 bg-secondary text-white text-sm font-bold rounded-lg hover:bg-secondary/90 transition-colors">
+                            Ver catálogo de premios
+                        </button>
                     </div>
 
-                    <div class="col-span-1 bg-white dark:bg-white p-6 rounded-xl shadow-md flex flex-col justify-center">
-                        <p class="text-sm font-medium text-text-muted-light mb-1">Próximo Nivel: {{ proximo_nivel }}</p>
+                    <div class="col-span-1 lg:col-span-2 bg-white dark:bg-white p-6 rounded-xl shadow-md flex flex-col justify-center">
                         
+                        <p class="text-base font-bold text-text-light dark:text-text-dark mb-1">
+                            Progreso a Nivel: <span class="text-primary">{{ proximo_nivel }}</span>
+                        </p>
+
                         <div class="mb-4 pt-2">
-                            <p class="text-lg font-bold text-text-light dark:text-text-dark mb-1">{{ progreso_porcentaje }}% completado</p>
-                            <p class="text-xs text-text-muted-light">Meta: {{ puntos_siguiente_nivel }} Puntos</p>
+                            <div class="flex justify-between items-center mb-2">
+                                <p class="text-2xl font-bold text-secondary">{{ progreso_porcentaje }}% completado</p>
+                                <p class="text-sm font-bold text-text-muted-light">Meta: <span class="text-text-light dark:text-text-dark">{{ puntos_siguiente_nivel }}</span> Ptos.</p>
+                            </div>
                             
-                        </div>
-                        <p class="text-sm text-text-muted-light">
-                            Te faltan **{{ puntos_restantes }}** puntos para alcanzar el siguiente nivel y desbloquear más beneficios.
+                            <div class="flex space-x-1 progress-emoji justify-center sm:justify-start">
+                                {% with stars_total=10 %}
+                                    {% with stars_filled=progreso_porcentaje|add:0|floordiv:stars_total %}
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= stars_filled %}
+                                                <span class="text-secondary">★</span>
+                                            {% else %}
+                                                <span class="text-gray-300">☆</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endwith %}
+                                {% endwith %}
+                            </div>
+                            </div>
+                        
+                        <p class="text-base text-text-muted-light dark:text-text-dark">
+                            Te faltan <span class="font-extrabold text-secondary">{{ puntos_restantes }}</span> puntos para desbloquear el siguiente nivel y sus beneficios exclusivos. ¡Sigue sumando!
                         </p>
                     </div>
                 </div>
 
                 <h2 class="text-2xl font-bold text-text-light dark:text-text-dark mt-10 mb-6">Todos los Beneficios</h2>
                 
-                <form method="get" action="{% url 'beneficios' %}" id="filter-form" class="flex justify-start gap-4 mb-6">
+                <form method="get" action="{% url 'beneficios' %}" id="filter-form" class="flex flex-wrap justify-start gap-4 mb-6">
                     <select name="category" onchange="document.getElementById('filter-form').submit()" 
                             class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-text-muted-light focus:ring-primary focus:border-primary">
                         <option value="TODOS" {% if not current_category or current_category == 'TODOS' %}selected{% endif %}>
-                            Filtrar: Todas las Categorías
+                            Filtrar por Categoría
                         </option>
                         {% for key, value in CATEGORIAS %}
                             <option value="{{ key }}" {% if key == current_category %}selected{% endif %}>
-                                Categoría: {{ value }}
+                                {{ value }}
                             </option>
                         {% endfor %}
                     </select>
@@ -155,24 +179,27 @@
                         <div class="col-span-full bg-white dark:bg-white p-10 rounded-xl shadow-sm text-center">
                             <span class="material-symbols-outlined text-6xl text-text-muted-light mb-4">info</span>
                             <p class="text-lg font-semibold text-text-muted-light">¡Actualmente no hay beneficios disponibles en esta categoría!</p>
-                            <p class="text-sm text-text-muted-light mt-2">Vuelve pronto o ajusta tus filtros.</p>
+                            <p class="text-sm text-text-muted-light mt-2">Vuelve pronto o ajusta tus filtros para explorar otras opciones.</p>
                         </div>
                     {% else %}
                         {% for beneficio in beneficios %}
-                        <div class="bg-white dark:bg-white rounded-xl shadow-md overflow-hidden flex flex-col">
+                        <div class="bg-white dark:bg-white rounded-xl shadow-md overflow-hidden flex flex-col hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
                             
-                            <div class="relative">
-                                <div class="h-40 bg-gray-200 flex items-center justify-center overflow-hidden">
-                                    {% if beneficio.foto %}
-                                        <img src="{{ beneficio.foto.url }}" alt="Imagen del beneficio: {{ beneficio.titulo }}" class="w-full h-full object-cover">
-                                    {% else %}
-                                        <span class="material-symbols-outlined text-6xl text-gray-500">redeem</span>
-                                    {% endif %}
-                                </div>
-                                <span class="absolute top-0 left-0 bg-secondary text-white text-xs font-bold px-3 py-1 rounded-br-lg uppercase">
+                            <div class="relative h-40"> {# Altura fija para la imagen/placeholder #}
+                                {% if beneficio.foto %}
+                                    <img src="{{ beneficio.foto.url }}" alt="Imagen del beneficio: {{ beneficio.titulo }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    <div class="w-full h-full flex items-center justify-center 
+                                                {% if beneficio.categoria == 'CAPACITACION' %}bg-placeholder-CAPACITACION{% elif beneficio.categoria == 'DESCUENTO' %}bg-placeholder-DESCUENTO{% elif beneficio.categoria == 'SORTEO' %}bg-placeholder-SORTEO{% elif beneficio.categoria == 'EVENTO' %}bg-placeholder-EVENTO{% else %}bg-placeholder-OTROS{% endif %}">
+                                        <span class="material-symbols-outlined placeholder-icon-benefit">
+                                            {% if beneficio.categoria == 'CAPACITACION' %}school{% elif beneficio.categoria == 'DESCUENTO' %}local_offer{% elif beneficio.categoria == 'SORTEO' %}emoji_events{% elif beneficio.categoria == 'EVENTO' %}event{% else %}redeem{% endif %}
+                                        </span>
+                                    </div>
+                                {% endif %}
+                                <span class="absolute top-0 left-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-br-lg uppercase">
                                     {{ beneficio.get_categoria_display }}
                                 </span>
-                                <span class="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                                <span class="absolute top-0 right-0 bg-secondary text-white text-sm font-bold px-3 py-1 rounded-bl-lg">
                                     {{ beneficio.puntos_requeridos }} Ptos.
                                 </span>
                             </div>
@@ -181,23 +208,25 @@
                                 <h3 class="text-lg font-bold text-text-light dark:text-text-dark mb-2">{{ beneficio.titulo }}</h3>
                                 <p class="text-text-muted-light text-sm mb-4 flex-grow">{{ beneficio.descripcion|truncatechars:100 }}</p>
                                 
-                                {% if beneficio.vence %}
-                                    <p class="text-xs text-text-muted-light mb-4 mt-auto">Vence: <span class="font-semibold">{{ beneficio.vence|date:"d M Y" }}</span></p>
-                                {% endif %}
+                                <div class="mt-auto pt-2 border-t border-gray-100 dark:border-gray-700">
+                                    {% if beneficio.vence %}
+                                        <p class="text-xs text-text-muted-light mb-3">Vence: <span class="font-semibold">{{ beneficio.vence|date:"d M Y" }}</span></p>
+                                    {% endif %}
 
-                                {% if beneficio.estado == 'ACTIVO' %}
-                                    <button class="w-full px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
-                                        Ver detalles y participar
-                                    </button>
-                                {% elif beneficio.estado == 'BENEFICIO_ACTIVO' %}
-                                    <button class="w-full px-4 py-2 bg-green-500 text-white text-sm font-bold rounded-lg cursor-not-allowed">
-                                        Beneficio Reclamado
-                                    </button>
-                                {% else %}
-                                    <button class="w-full px-4 py-2 bg-gray-400 text-white text-sm font-bold rounded-lg cursor-not-allowed">
-                                        Terminado
-                                    </button>
-                                {% endif %}
+                                    {% if beneficio.estado == 'ACTIVO' %}
+                                        <button class="w-full px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
+                                            Ver detalles y participar
+                                        </button>
+                                    {% elif beneficio.estado == 'BENEFICIO_ACTIVO' %}
+                                        <button class="w-full px-4 py-2 bg-green-500 text-white text-sm font-bold rounded-lg cursor-not-allowed">
+                                            Beneficio Reclamado
+                                        </button>
+                                    {% else %}
+                                        <button class="w-full px-4 py-2 bg-gray-400 text-white text-sm font-bold rounded-lg cursor-not-allowed">
+                                            Terminado
+                                        </button>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                         {% endfor %}

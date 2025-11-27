@@ -47,7 +47,6 @@
                         <a href="{% url 'plataforma_comerciante' %}" class="hover:text-primary transition-colors">Plataforma</a>
                         <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> 
                         <a href="{% url 'beneficios' %}" class="hover:text-primary transition-colors">Beneficios</a>
-                        <a href="{% url 'comerciantes' %}" class="hover:text-primary transition-colors">Comerciantes</a>
                         <a href="{% url 'perfil' %}" class="text-primary transition-colors">Perfil</a>
                     </nav>
                 </div>
@@ -57,7 +56,6 @@
                     </button>
                     <div class="flex items-center gap-2 p-1 rounded-lg bg-gray-100 dark:bg-gray-700">
                         <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" 
-                             data-alt="Foto de {{ comerciante.nombre_apellido }}" 
                              style='background-image: url("{{ comerciante.get_profile_picture_url }}");'>
                         </div>
                         
@@ -83,56 +81,45 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
                     <div class="lg:col-span-1 space-y-8">
-                        <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
+                        <div class="bg-white dark:bg-white p-6 rounded-xl shadow-lg border-t-4 border-primary">
+                            
                             <div class="flex flex-col items-center mb-6">
-                                <div class="relative">
-                                    <div id="profile-picture-display" class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-24" 
+                                <div class="relative group">
+                                    <div id="profile-picture-display" 
+                                         class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-28 border-4 border-white dark:border-background-dark shadow-xl transition-shadow duration-300 group-hover:shadow-2xl" 
                                          style='background-image: url("{{ comerciante.get_profile_picture_url }}");'>
                                     </div>
                                     <button onclick="openModal('editPhotoModal')"
-                                            class="absolute bottom-0 right-0 p-1 bg-primary text-white rounded-full border-2 border-white dark:border-background-dark hover:bg-primary/90">
+                                            class="absolute bottom-0 right-0 p-1 bg-primary text-white rounded-full border-2 border-white dark:border-background-dark hover:bg-secondary/90 transition-colors opacity-90 group-hover:opacity-100 shadow-md">
                                         <span class="material-symbols-outlined text-base">edit</span>
                                     </button>
                                 </div>
-                                <h2 class="text-xl font-bold text-text-light dark:text-text-dark mt-4">{{ comerciante.nombre_apellido }}</h2>
-                                <p class="text-text-muted-light dark:text-text-muted-dark text-sm mt-1">
-                                    {{ comerciante.get_relacion_negocio_display }} de {{ comerciante.get_tipo_negocio_display }} '{{ nombre_negocio_display }}'
+                                <h2 class="text-2xl font-extrabold text-text-light dark:text-text-dark mt-4">{{ comerciante.nombre_apellido }}</h2>
+                                <p class="text-secondary dark:text-secondary text-base font-semibold mt-1">
+                                    {{ comerciante.rol }}
                                 </p>
                             </div>
                             
                             <div class="space-y-4">
-                                <div class="border-t pt-4">
-                                    <h3 class="text-lg font-bold text-text-light dark:text-text-dark mb-4">Puntos y Nivel</h3>
+                                
+                                <div class="p-4 rounded-lg bg-primary text-white shadow-xl flex flex-col items-center my-6">
+                                    <p class="text-sm font-medium text-gray-200 uppercase tracking-wider">Puntos y Nivel</p>
                                     
-                                    <div class="flex items-center justify-between mb-2">
-                                        <p class="text-sm font-medium text-text-muted-light">Puntos Acumulados:</p>
-                                        <p class="text-base font-bold text-secondary">{{ puntos_actuales }}</p>
-                                    </div>
-                                    
-                                    <div class="flex items-center justify-between">
-                                        <p class="text-sm font-medium text-text-muted-light">Nivel Actual:</p>
-                                        <p class="text-base font-bold text-primary">{{ nivel_actual }}</p>
+                                    <div class="flex items-center gap-4 my-2">
+                                        <p class="text-5xl font-extrabold">{{ puntos_actuales|default:0 }}</p>
+                                        <div class="flex flex-col text-left">
+                                            <p class="text-xl font-bold text-secondary">{{ nivel_actual }}</p>
+                                            <p class="text-xs text-gray-200">Nivel</p>
+                                        </div>
                                     </div>
 
                                     {% if nivel_actual != 'Diamante' %}
-                                    <div class="mt-3 text-xs text-text-muted-light">
-                                        Faltan {{ puntos_restantes }} puntos para subir al nivel {{ progreso_porcentaje|add:0 }}
+                                    <div class="w-full h-1 bg-gray-200/50 rounded-full my-2">
+
                                     </div>
+        
                                     {% endif %}
                                 </div>
-                                
-                                {% if comerciante.es_proveedor %}
-                                <div class="border-t pt-4">
-                                    <h3 class="text-lg font-bold text-text-light dark:text-text-dark mb-4">Gestión de Roles</h3>
-                                    
-                                    <p class="text-sm font-semibold text-green-600 mb-3">Rol de Proveedor: ¡ACTIVO!</p>
-                                    <a href="{% url 'proveedor_dashboard' %}" 
-                                       class="w-full inline-flex items-center justify-center p-2 bg-secondary text-white text-sm font-bold rounded-lg hover:bg-secondary/90 transition-colors">
-                                        Ir al Dashboard de Proveedor
-                                    </a>
-                                </div>
-                                {% endif %}
-                                
                                 <div class="border-t pt-4">
                                     <div class="flex justify-between items-center mb-4">
                                         <h3 class="text-lg font-bold text-text-light dark:text-text-dark">Datos Personales</h3>
@@ -147,127 +134,100 @@
                                     <p class="text-sm font-medium text-text-muted-light">WhatsApp:</p>
                                     <p class="text-base text-text-light dark:text-text-dark">{{ comerciante.whatsapp|default:"No registrado" }}</p>
                                 </div>
-
-                                <div class="border-t pt-4">
-                                    <div class="flex justify-between items-center mb-4">
-                                        <h3 class="text-lg font-bold text-text-light dark:text-text-dark">Datos del Negocio</h3>
-                                        <button onclick="openModal('editBusinessModal')"
-                                                class="flex items-center gap-1 text-primary text-sm font-semibold hover:underline">
-                                            <span class="material-symbols-outlined text-base">edit</span>
-                                            Editar
-                                        </button>
-                                    </div>
-                                    <p class="text-sm font-medium text-text-muted-light">Nombre del Negocio:</p>
-                                    <p class="text-base text-text-light dark:text-text-dark mb-2">{{ nombre_negocio_display }}</p>
-                                    <p class="text-sm font-medium text-text-muted-light">Relación:</p>
-                                    <p class="text-base text-text-light dark:text-text-dark mb-2">{{ comerciante.get_relacion_negocio_display }}</p>
-                                    <p class="text-sm font-medium text-text-muted-light">Tipo:</p>
-                                    <p class="text-base text-text-light dark:text-text-dark mb-2">{{ comerciante.get_tipo_negocio_display }}</p>
-                                    <p class="text-sm font-medium text-text-muted-light">Comuna:</p>
-                                    <p class="text-base text-text-light dark:text-text-dark">{{ comerciante.comuna }}</p>
+                                
                                 </div>
-                            </div>
                         </div>
                     </div>
                     
                     <div class="lg:col-span-2 space-y-8">
                         
-                        <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-lg font-bold text-text-light dark:text-text-dark">Mis Intereses</h3>
-                                <button onclick="openModal('editInterestsModal')"
+                        <div class="bg-white dark:bg-white p-6 rounded-xl shadow-lg border-t-4 border-secondary">
+                            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                                <h3 class="text-xl font-bold text-text-light dark:text-text-dark">Datos del Negocio</h3>
+                                <button onclick="openModal('editBusinessModal')"
                                         class="flex items-center gap-1 text-primary text-sm font-semibold hover:underline">
                                     <span class="material-symbols-outlined text-base">edit</span>
-                                    Editar Intereses
+                                    Editar
                                 </button>
                             </div>
-                            <div class="flex flex-wrap gap-2">
-                                {% for codigo_interes in intereses_actuales_codigos %}
-                                    {% if codigo_interes %} 
-                                        <span class="px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full">
-                                            {{ intereses_choices_dict|get_item:codigo_interes }}
-                                        </span>
-                                    {% endif %}
-                                {% empty %}
-                                    <p class="text-text-muted-light text-sm">Aún no has seleccionado tus intereses.</p>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
-                            <h3 class="text-lg font-bold text-text-light dark:text-text-dark mb-4">Configuración</h3>
-                            <div class="space-y-4">
-                                <div class="border-t pt-4">
-                                    <h3 class="text-lg font-bold text-text-light dark:text-text-dark mb-4">Cuenta</h3>
-                                    <button onclick="confirmLogout()" 
-                                            class="flex items-center gap-2 text-red-600 bg-red-50/50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 p-3 rounded-lg w-full transition-colors font-semibold justify-center">
-                                        <span class="material-symbols-outlined text-xl">logout</span>
-                                        Cerrar Sesión
-                                    </button>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pt-2">
+                                <div>
+                                    <p class="text-sm font-medium text-text-muted-light">Nombre del Negocio:</p>
+                                    <p class="text-base text-text-light dark:text-text-dark">{{ nombre_negocio_display }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-text-muted-light">Comuna:</p>
+                                    <p class="text-base text-text-light dark:text-text-dark">{{ comerciante.comuna }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-text-muted-light">Rol en el Negocio:</p>
+                                    <p class="text-base text-text-light dark:text-text-dark">{{ comerciante.get_relacion_negocio_display }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-text-muted-light">Tipo de Negocio:</p>
+                                    <p class="text-base text-text-light dark:text-text-dark">{{ comerciante.get_tipo_negocio_display }}</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+
+                        <div class="bg-white dark:bg-white p-6 rounded-xl shadow-lg">
+                            <button onclick="confirmLogout()" 
+                                    class="w-full inline-flex items-center justify-center p-3 text-sm font-bold rounded-lg 
+                                           bg-gradient-to-r from-red-500 to-red-600 text-white 
+                                           hover:from-red-600 hover:to-red-700 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg">
+                                <span class="material-symbols-outlined text-xl mr-2">logout</span>
+                                Cerrar Sesión
+                            </button>
+                        </div>
+                        </div>
                 </div>
             </main>
         </div>
     </div>
     
-    {# --- MODALES DE EDICIÓN RESTAURADOS --- #}
-
-    {# Modal 1: Editar Foto #}
     <div id="editPhotoModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
         <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-md">
             <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4 border-b pb-2">Cambiar Foto de Perfil</h3>
-            <form method="POST" action="{% url 'perfil' %}" enctype="multipart/form-data" novalidate>
+            <form method="POST" action="{% url 'perfil' %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="edit_photo">
                 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-text-light dark:text-text-dark mb-1" for="{{ photo_form.foto_perfil.id_for_label }}">Subir nueva foto:</label>
-                    {{ photo_form.foto_perfil }}
-                    {% for error in photo_form.foto_perfil.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                    {% endfor %}
+                    <label for="id_foto_perfil" class="block text-sm font-medium text-text-light mb-1">Subir nueva imagen:</label>
+                    <input type="file" name="foto_perfil" id="id_foto_perfil" class="w-full">
                 </div>
-                
-                <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('editPhotoModal')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">Guardar Foto</button>
+
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onclick="closeModal('editPhotoModal')" class="px-4 py-2 text-sm font-medium text-text-light rounded-lg hover:bg-gray-100">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-secondary rounded-lg hover:bg-secondary/90">Guardar Foto</button>
                 </div>
             </form>
         </div>
     </div>
 
-    {# Modal 2: Editar Datos Personales/Contacto #}
     <div id="editContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
         <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-md">
-            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4 border-b pb-2">Editar Contacto</h3>
+            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4 border-b pb-2">Editar Datos Personales</h3>
             <form method="POST" action="{% url 'perfil' %}" novalidate>
                 {% csrf_token %}
                 <input type="hidden" name="action" value="edit_contact">
                 
-                <div class="space-y-4">
-                    {% for field in contact_form %}
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-text-light dark:text-text-dark mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
-                        {% for error in field.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                        {% endfor %}
+                {% for field in contact_form %}
+                    <div class="mb-4">
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-text-light mb-1">{{ field.label }}</label>
+                        <input type="{{ field.widget_type }}" name="{{ field.name }}" value="{{ field.value|default:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
                     </div>
-                    {% endfor %}
-                </div>
-                
-                <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('editContactModal')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">Guardar Cambios</button>
+                {% endfor %}
+
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onclick="closeModal('editContactModal')" class="px-4 py-2 text-sm font-medium text-text-light rounded-lg hover:bg-gray-100">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90">Guardar</button>
                 </div>
             </form>
         </div>
     </div>
 
-    {# Modal 3: Editar Datos del Negocio #}
     <div id="editBusinessModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
         <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-md">
             <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4 border-b pb-2">Editar Datos del Negocio</h3>
@@ -275,54 +235,19 @@
                 {% csrf_token %}
                 <input type="hidden" name="action" value="edit_business">
                 
-                <div class="space-y-4">
-                    {% for field in business_form %}
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-text-light dark:text-text-dark mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% for field in business_form %}
+                    <div class="mb-4">
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-text-light mb-1">{{ field.label }}</label>
                         {{ field }}
                         {% for error in field.errors %}
                             <p class="text-red-500 text-xs mt-1">{{ error }}</p>
                         {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
-                
-                <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('editBusinessModal')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
+                {% endfor %}
 
-    {# Modal 4: Editar Intereses #}
-    <div id="editInterestsModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
-        <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-lg">
-            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4 border-b pb-2">Editar Intereses</h3>
-            <form method="POST" action="{% url 'perfil' %}" novalidate>
-                {% csrf_token %}
-                <input type="hidden" name="action" value="edit_interests">
-                
-                <div class="space-y-4">
-                    <p class="text-sm text-text-muted-light mb-3">Selecciona los temas de la comunidad que te interesan:</p>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {% for choice in interests_form.intereses.field.choices %}
-                            <label class="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
-                                <input type="checkbox" name="{{ interests_form.intereses.name }}" value="{{ choice.0 }}" 
-                                       class="form-checkbox h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
-                                       {% if choice.0 in intereses_actuales_codigos %}checked{% endif %}>
-                                <span class="text-sm text-text-light dark:text-text-dark">{{ choice.1 }}</span>
-                            </label>
-                        {% endfor %}
-                    </div>
-                    {% for error in interests_form.intereses.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                    {% endfor %}
-                </div>
-                
-                <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('editInterestsModal')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">Guardar Intereses</button>
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onclick="closeModal('editBusinessModal')" class="px-4 py-2 text-sm font-medium text-text-light rounded-lg hover:bg-gray-100">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90">Guardar</button>
                 </div>
             </form>
         </div>
@@ -347,20 +272,26 @@
             }
         });
 
-        // Simulación de precarga de foto para modal (opcional)
-        const fotoInput = document.getElementById('id_foto_perfil');
-        if (fotoInput) {
-            fotoInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    console.log('Archivo seleccionado:', file.name);
-                }
-            });
-        }
+        // Actualiza la visualización de la foto de perfil en el modal de edición
+        document.querySelector('#editPhotoModal input[type="file"]').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                document.getElementById('profile-picture-display').style.backgroundImage = `url(${e.target.result})`;
+            }
+            
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        });
+
         
         // FUNCIÓN: Confirma el cierre de sesión antes de redirigir
         function confirmLogout() {
+            // Muestra la ventana de confirmación nativa
             if (window.confirm("¿Estás seguro de que quieres cerrar la sesión?")) {
+                // Si el usuario confirma, redirige al URL de logout de Django
                 window.location.href = "{% url 'logout' %}";
             }
         }

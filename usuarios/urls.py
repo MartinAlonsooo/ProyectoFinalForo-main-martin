@@ -1,4 +1,4 @@
-# usuarios/urls.py (CONTENIDO COMPLETO)
+# usuarios/urls.py (CONTENIDO COMPLETO CORREGIDO)
 
 from django.urls import path
 from . import views
@@ -16,22 +16,18 @@ urlpatterns = [
     # PERFIL Y BENEFICIOS
     path('perfil/', views.perfil_view, name='perfil'),
     path('beneficios/', views.beneficios_view, name='beneficios'),
-    
-    # NUEVOS COMERCIOS (Muro/Blog)
-    path('nuevos-comercios/', views.nuevos_comercios_view, name='comerciantes'), 
-    
+
+    # RUTAS PRINCIPALES
+    path('noticias/', views.noticias_view, name='noticias'),
+    path('redes-sociales/', views.redes_sociales_view, name='redes_sociales'), 
+    path('comerciantes/', views.nuevos_comercios_view, name='comerciantes'), # <--- RUTA FALTANTE AGREGADA
+
     # DIRECTORIO DE PROVEEDORES
     path('directorio/', views.directorio_view, name='directorio'),
     path('directorio/<int:pk>/', views.proveedor_perfil_view, name='proveedor_perfil'),
-    
-    # GESTIÓN DE ROLES (NUEVAS RUTAS AÑADIDAS)
-    path('proveedores/dashboard/', views.proveedor_dashboard_view, name='proveedor_dashboard'),
     
     # POSTS (DETALLE, COMENTARIO, LIKE)
     path('post/<int:post_id>/', views.post_detail_view, name='post_detail'),
     path('post/<int:post_id>/comentar/', views.add_comment_view, name='add_comment'),
     path('post/<int:post_id>/like/', views.like_post_view, name='like_post'),
-
-    path('redes-sociales/', views.redes_sociales_view, name='redes_sociales'),
-    path('noticias/', views.noticias_view, name='noticias'),
 ]

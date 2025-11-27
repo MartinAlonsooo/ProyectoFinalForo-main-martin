@@ -1,10 +1,11 @@
+# usuarios/forms.py (CONTENIDO COMPLETO MODIFICADO)
+
 from django import forms
 from .models import (
-    Comerciante, Post, Comentario, Like,
-    RELACION_NEGOCIO_CHOICES, TIPO_NEGOCIO_CHOICES,
-    INTERESTS_CHOICES, CATEGORIAS_FORO, CATEGORIAS_BLOG
-)
-
+    Comerciante, Post, Comentario, Like, 
+    RELACION_NEGOCIO_CHOICES, TIPO_NEGOCIO_CHOICES, 
+    CATEGORIA_POST_CHOICES
+) 
 # Opciones de comuna
 COMUNA_CHOICES = [
     ('', 'Selecciona tu comuna'),
@@ -15,10 +16,6 @@ COMUNA_CHOICES = [
     ('VALPARAISO', 'Valparaíso'),
     ('OTRO_COMUNA', '...'),
 ]
-
-# Lista simplificada para el BLOG/Muro (10 categorías)
-BLOG_SPECIFIC_CHOICES = CATEGORIAS_BLOG
-
 
 class RegistroComercianteForm(forms.ModelForm):
     password = forms.CharField(
@@ -67,7 +64,6 @@ class RegistroComercianteForm(forms.ModelForm):
 
         return cleaned_data
 
-
 # ✅ Formulario de Login separado
 class LoginForm(forms.Form):
     email = forms.EmailField(
@@ -85,19 +81,19 @@ class LoginForm(forms.Form):
         })
     )
 
-
 # -------------------------------------------------------------------------------------
 class PostForm(forms.ModelForm):
-    # Campo para subida de archivo desde PC
+    # Campo para subida de archivo desde PC (NUEVA FUNCIONALIDAD)
     uploaded_file = forms.FileField(
         required=False,
         label='Subir Archivo (Imagen/Documento)',
         widget=forms.ClearableFileInput(attrs={
+            # Estilos de Tailwind para el campo de archivo
             'class': 'form-input-file block w-full text-sm text-text-light file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 dark:file:bg-primary dark:file:text-white',
         })
     )
 
-    # Campo para link/URL externo
+    # Campo para link/URL externo (NUEVA FUNCIONALIDAD)
     url_link = forms.URLField(
         required=False,
         label='Link URL',
@@ -107,7 +103,7 @@ class PostForm(forms.ModelForm):
         })
     )
     
-    # Campo para etiquetas
+    # Campo para etiquetas (se mantiene)
     etiquetas_input = forms.CharField(
         required=False,
         label='Etiquetas',
@@ -120,7 +116,8 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = ('titulo', 'contenido', 'categoria')
+        fields = ('titulo', 'contenido', 'categoria') 
+        
         widgets = {
             'titulo': forms.TextInput(attrs={
                 'placeholder': 'Titulo',
@@ -133,16 +130,8 @@ class PostForm(forms.ModelForm):
             }),
             'categoria': forms.Select(attrs={
                 'class': 'form-select flex w-full min-w-0 flex-1 rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary h-12 placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark p-[10px] text-base font-normal leading-normal'
-            }),
+            }, choices=CATEGORIA_POST_CHOICES),
         }
-
-    def __init__(self, *args, **kwargs):
-        """
-        Este formulario se usa en el FORO.
-        Aquí dejamos SOLO las categorías del foro (no las del blog).
-        """
-        super().__init__(*args, **kwargs)
-        self.fields['categoria'].choices = CATEGORIAS_FORO
 
     def clean(self):
         cleaned_data = super().clean()
@@ -162,14 +151,12 @@ class PostForm(forms.ModelForm):
         
         return cleaned_data
     
-
 class ProfilePhotoForm(forms.ModelForm):
     """Formulario para actualizar solo la foto de perfil."""
     class Meta:
         model = Comerciante
         fields = ['foto_perfil']
         
-
 class BusinessDataForm(forms.ModelForm):
     """Formulario para actualizar los datos del negocio (Relación, Tipo, Comuna, Nombre)."""
     class Meta:
@@ -183,7 +170,6 @@ class BusinessDataForm(forms.ModelForm):
             'nombre_negocio': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white', 'placeholder': 'Ej: Minimarket El Sol'}),
         }
 
-
 class ContactInfoForm(forms.ModelForm):
     """Formulario para actualizar el email y WhatsApp."""
     class Meta:
@@ -195,16 +181,9 @@ class ContactInfoForm(forms.ModelForm):
             'whatsapp': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white', 'placeholder': '+569XXXXXXXX'}),
         }
 
+# InterestsForm ELIMINADO
 
-class InterestsForm(forms.Form):
-    """Formulario para seleccionar múltiples intereses de la lista definida."""
-    intereses = forms.MultipleChoiceField(
-        choices=INTERESTS_CHOICES,
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-        label="Selecciona tus intereses"
-    )
-
+# --- FORMULARIO DE COMENTARIOS RESTAURADO ---
 
 class ComentarioForm(forms.ModelForm):
     """Formulario para añadir un nuevo comentario."""
@@ -221,25 +200,3 @@ class ComentarioForm(forms.ModelForm):
         labels = {
             'contenido': 'Tu Comentario'
         }
-
-
-# --- Blog Form (Especializado para Muro de Nuevos Comerciantes) ---
-
-class BlogCreationForm(PostForm):
-    """Formulario para crear posts del Blog/Muro, limitado a 10 categorías."""
-    
-    class Meta(PostForm.Meta):
-        fields = ('titulo', 'contenido', 'categoria', 'uploaded_file',) 
-        
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # 1. Limitar las opciones de categoría a solo las específicas del Blog/Muro
-        self.fields['categoria'].choices = BLOG_SPECIFIC_CHOICES
-        self.fields['categoria'].widget.choices = BLOG_SPECIFIC_CHOICES
-        
-        # 2. Ocultamos los campos que PostForm hereda y que no queremos en el Blog (url_link, etiquetas_input)
-        if 'url_link' in self.fields:
-            self.fields['url_link'].widget = forms.HiddenInput()
-        if 'etiquetas_input' in self.fields:
-            self.fields['etiquetas_input'].widget = forms.HiddenInput()

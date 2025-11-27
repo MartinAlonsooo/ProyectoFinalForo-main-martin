@@ -56,18 +56,9 @@
                         <a href="{% url 'plataforma_comerciante' %}" class="text-primary transition-colors">Plataforma</a>
                         <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> 
                         <a href="{% url 'beneficios' %}" class="hover:text-primary transition-colors">Beneficios</a>
+                        <a href="{% url 'redes_sociales' %}" class="hover:text-primary transition-colors">Redes Sociales</a>
                         <a href="{% url 'perfil' %}" class="hover:text-primary transition-colors">Perfil</a>
                     </nav>
-                </div>
-                <div class="flex-1 max-w-lg mx-auto">
-                    <label class="flex flex-col min-w-40 !h-10 max-w-full">
-                        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
-                            <div class="text-text-muted-light dark:text-text-muted-dark flex border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 items-center justify-center pl-4 rounded-l-lg border-r-0">
-                                <span class="material-symbols-outlined">search</span>
-                            </div>
-                            <input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary h-full placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Buscar en la plataforma..." value=""/>
-                        </div>
-                    </label>
                 </div>
                 <div class="flex justify-end gap-4 items-center">
                     <button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -328,13 +319,13 @@
                                 <div class="space-y-4">
                                     {% if news_preview %}
                                         {% for item in news_preview %}
-                                            <div class="flex items-start">
+                                            <div class="flex items-start border-b border-gray-100 dark:border-gray-700 pb-3 last:border-b-0 last:pb-0">
                                                 <span class="material-symbols-outlined text-secondary text-base mr-2 mt-1">lens_blur</span>
                                                 <div>
                                                     <a href="{{ item.link }}" target="_blank" class="text-text-light dark:text-text-dark font-semibold text-sm leading-snug hover:text-primary transition-colors">
                                                         {{ item.title|truncatechars:70 }}
                                                     </a>
-                                                    <p class="text-text-muted-light text-xs mt-1">Fuente: Noticias</p>
+                                                    <p class="text-text-muted-light text-xs mt-1">Fuente: Negocios</p>
                                                 </div>
                                             </div>
                                         {% endfor %}
@@ -360,6 +351,7 @@
                                         </div>
                                         <div>
                                             <p class="text-text-light dark:text-text-dark font-semibold">Taller Online: Marketing en Redes Sociales</p>
+                                            <p class="text-text-muted-light dark:text-text-muted-dark text-sm">18:00 - Online</p>
                                             <a class="text-primary text-xs font-bold mt-1 inline-block" href="#">Ver detalles</a>
                                         </div>
                                     </div>
@@ -370,6 +362,7 @@
                                         </div>
                                         <div>
                                             <p class="text-text-light dark:text-text-dark font-semibold">Reunión Mensual de Comerciantes - Zona Centro</p>
+                                            <p class="text-text-muted-light dark:text-text-muted-dark text-sm">19:30 - Centro Cívico</p>
                                             <a class="text-primary text-xs font-bold mt-1 inline-block" href="#">Ver detalles</a>
                                         </div>
                                     </div>
@@ -420,7 +413,7 @@
 
             <div>
                 <label for="{{ post_form.contenido.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ post_form.contenido.label }}</label>
-                <textarea name="{{ post_form.contenido.name }}" id="{{ post_form.contenido.id_for_label }}"
+                <textarea name="{{ comentario_form.contenido.name }}" id="{{ post_form.contenido.id_for_label }}"
                     placeholder="Escribe tu comentario..." rows="5"
                     class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark p-[10px] text-base font-normal leading-normal max-h-48 min-h-24">
                 </textarea>
@@ -464,61 +457,115 @@
         </form>
     </div>
 
-<script>
-    function toggleFilter(contentId, iconId) {
-        const content = document.getElementById(contentId);
-        const icon = document.getElementById(iconId);
-        
-        // Toggle visibility
-        content.classList.toggle('hidden');
-        
-        // Change icon (add/remove)
-        if (content.classList.contains('hidden')) {
-            icon.textContent = 'add';
-        } else {
-            icon.textContent = 'remove';
+    <div id="editPhotoModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
+        <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4 border-b pb-2">Cambiar Foto de Perfil</h3>
+            <form method="POST" action="{% url 'perfil' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_photo">
+                
+                <div class="mb-4">
+                    <label for="id_foto_perfil" class="block text-sm font-medium text-text-light mb-1">Subir nueva imagen:</label>
+                    <input type="file" name="foto_perfil" id="id_foto_perfil" class="w-full">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onclick="closeModal('editPhotoModal')" class="px-4 py-2 text-sm font-medium text-text-light rounded-lg hover:bg-gray-100">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-secondary rounded-lg hover:bg-secondary/90">Guardar Foto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
+        <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4 border-b pb-2">Editar Datos Personales</h3>
+            <form method="POST" action="{% url 'perfil' %}" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_contact">
+                
+                {% for field in contact_form %}
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-text-light mb-1">{{ field.label }}</label>
+                        <input type="{{ field.widget_type }}" name="{{ field.name }}" value="{{ field.value|default:'' }}" class="modal-form-input">
+                    </div>
+                {% endfor %}
+
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onclick="closeModal('editContactModal')" class="px-4 py-2 text-sm font-medium text-text-light rounded-lg hover:bg-gray-100">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editBusinessModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
+        <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4 border-b pb-2">Editar Datos del Negocio</h3>
+            <form method="POST" action="{% url 'perfil' %}" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_business">
+                
+                {% for field in business_form %}
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-text-light mb-1">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onclick="closeModal('editBusinessModal')" class="px-4 py-2 text-sm font-medium text-text-light rounded-lg hover:bg-gray-100">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
         }
-    }
-    
-    // FUNCIÓN: Para mostrar/ocultar toda la sección de comentarios
-    function toggleComments(postId) {
-        const commentsSection = document.getElementById('comments-section-' + postId);
-        
-        if (commentsSection) {
-            commentsSection.classList.toggle('hidden');
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
         }
-    }
+        
+        // Cierra modales al presionar ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                document.querySelectorAll('.fixed.inset-0').forEach(modal => {
+                    modal.classList.add('hidden');
+                });
+            }
+        });
 
-    // NUEVA FUNCIÓN: Muestra/Oculta los comentarios ocultos y cambia el texto del botón.
-    function toggleHiddenComments(postId) {
-        const commentsContainer = document.getElementById('comment-list-' + postId);
-        const allComments = commentsContainer.querySelectorAll('.comment-item-' + postId);
-        const showMoreBtn = document.getElementById('show-more-btn-' + postId);
-
-        if (!showMoreBtn) return;
-
-        // Comprobamos el estado actual basándonos en el texto del botón
-        if (showMoreBtn.textContent.includes('Ver más')) {
+        // Actualiza la visualización de la foto de perfil en el modal de edición
+        document.querySelector('#editPhotoModal input[type="file"]').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
             
-            // MODO "VER MÁS" -> MOSTRAR TODO
-            allComments.forEach(comment => {
-                comment.classList.remove('hidden');
-            });
-            
-            showMoreBtn.textContent = 'Ver menos comentarios';
-            
-        } else {
-            
-            // MODO "VER MENOS" -> OCULTAR DESDE EL SEXTO
-            
-            // Oculta los comentarios a partir del 6º elemento (índice 5)
-            for(let i = 5; i < allComments.length; i++) {
-                allComments[i].classList.add('hidden');
+            reader.onload = function(e) {
+                document.getElementById('profile-picture-display').style.backgroundImage = `url(${e.target.result})`;
             }
             
-            showMoreBtn.textContent = 'Ver más comentarios';
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        });
+
+        
+        // FUNCIÓN: Confirma el cierre de sesión antes de redirigir
+        function confirmLogout() {
+            // Muestra la ventana de confirmación nativa
+            if (window.confirm("¿Estás seguro de que quieres cerrar la sesión?")) {
+                // Si el usuario confirma, redirige al URL de logout de Django
+                window.location.href = "{% url 'logout' %}";
+            }
         }
-    }
-</script>
+    </script>
 </body>
 </html>
