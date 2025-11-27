@@ -17,6 +17,32 @@ COMUNA_CHOICES = [
     ('OTRO_COMUNA', '...'),
 ]
 
+# Definición extendida de categorías para el PostForm (incluyendo las 10 del Blog)
+# NOTA: Esta lista DEBE ser compatible con las choices del modelo Post.categoria en models.py
+COMPREHENSIVE_POST_CHOICES = [
+    # Categorías para el Foro (Discusión)
+    ('DUDA', 'Duda / Pregunta'),
+    ('OPINION', 'Opinión / Debate'),
+    ('RECOMENDACION', 'Recomendación'),
+    ('NOTICIA', 'Noticia del Sector'),
+    ('GENERAL', 'General'),
+    # Categorías específicas del Blog/Muro (Nuevos Comercios)
+    ('AYUDA_SOPORTE', 'Ayuda y Soporte'),
+    ('GESTION_NEGOCIO', 'Gestión del Negocio'),
+    ('MARKETING_VENTAS', 'Marketing y Ventas'),
+    ('ATENCION_CLIENTE', 'Atención al Cliente'),
+    ('TECNOLOGIA', 'Tecnología para Comerciantes'),
+    ('LEGAL_TRAMITES', 'Legal y Trámites'),
+    ('INSPIRACION_EXITO', 'Inspiración y Casos de Éxito'),
+    ('PROVEEDORES_ABASTO', 'Proveedores y Abastecimiento'),
+    ('TENDENCIAS_COMERCIO', 'Tendencias del Comercio'),
+    ('SALUD_EMPRENDEDOR', 'Salud del Emprendedor'),
+]
+
+# Lista simplificada para el desplegable del Blog/Muro (10 categorías)
+BLOG_SPECIFIC_CHOICES = COMPREHENSIVE_POST_CHOICES[5:]
+
+
 class RegistroComercianteForm(forms.ModelForm):
     password = forms.CharField(
         label='Contraseña',
@@ -130,7 +156,7 @@ class PostForm(forms.ModelForm):
             }),
             'categoria': forms.Select(attrs={
                 'class': 'form-select flex w-full min-w-0 flex-1 rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary h-12 placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark p-[10px] text-base font-normal leading-normal'
-            }, choices=CATEGORIA_POST_CHOICES),
+            }, choices=COMPREHENSIVE_POST_CHOICES), # <--- USA LAS CATEGORÍAS EXTENDIDAS
         }
 
     def clean(self):
@@ -208,3 +234,26 @@ class ComentarioForm(forms.ModelForm):
         labels = {
             'contenido': 'Tu Comentario'
         }
+
+
+# --- Blog Form (Especializado para Muro de Nuevos Comerciantes) ---
+
+class BlogCreationForm(PostForm):
+    """Formulario para crear posts del Blog/Muro, limitado a 10 categorías."""
+    
+    class Meta(PostForm.Meta):
+        # Campos que queremos mostrar en el blog (solo título, contenido, categoría, y uploaded_file/imagen)
+        fields = ('titulo', 'contenido', 'categoria', 'uploaded_file',) 
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # 1. Limitar las opciones de categoría a solo las específicas del Blog/Muro
+        self.fields['categoria'].choices = BLOG_SPECIFIC_CHOICES
+        self.fields['categoria'].widget.choices = BLOG_SPECIFIC_CHOICES
+        
+        # 2. Ocultamos los campos que PostForm hereda y que no queremos en el Blog (url_link, etiquetas_input)
+        if 'url_link' in self.fields:
+            self.fields['url_link'].widget = forms.HiddenInput()
+        if 'etiquetas_input' in self.fields:
+            self.fields['etiquetas_input'].widget = forms.HiddenInput()

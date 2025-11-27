@@ -1,5 +1,4 @@
 {% load static %}
-{% load my_custom_filters %} 
 <!DOCTYPE html>
 <html class="light" lang="es">
 <head>
@@ -36,34 +35,12 @@
     </script>
     
     <style>
-        /* Panel para publicaciones */
-        .off-canvas-panel-post {
+        .off-canvas-panel {
             transition: transform 0.3s ease-in-out;
             transform: translateX(100%); /* Oculto a la derecha */
         }
-        .off-canvas-panel-post.active {
+        .off-canvas-panel.active {
             transform: translateX(0); /* Visible */
-        }
-        /* Panel para notificaciones (NUEVO) */
-        .off-canvas-panel-notifications {
-            transition: transform 0.3s ease-in-out;
-            transform: translateX(100%); 
-        }
-        .off-canvas-panel-notifications.active {
-            transform: translateX(0); 
-        }
-        /* Estilo para los logos de las fuentes */
-        .source-logo-container {
-            width: 40px; 
-            height: 40px;
-            min-width: 40px;
-            background-color: #f7f7f7;
-            border-radius: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border: 1px solid #eee;
         }
     </style>
 </head>
@@ -77,28 +54,16 @@
                     </div>
                     <nav class="hidden md:flex gap-6 text-text-muted-light dark:text-text-muted-dark font-semibold text-sm">
                         <a href="{% url 'plataforma_comerciante' %}" class="text-primary transition-colors">Plataforma</a>
-                        <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> <a href="{% url 'beneficios' %}" class="hover:text-primary transition-colors">Beneficios</a>
+                        <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> 
+                        <a href="{% url 'beneficios' %}" class="hover:text-primary transition-colors">Beneficios</a>
+                        <a href="{% url 'comerciantes' %}" class="hover:text-primary transition-colors">Comerciantes</a>
                         <a href="{% url 'perfil' %}" class="hover:text-primary transition-colors">Perfil</a>
                     </nav>
                 </div>
-                <div class="flex-1 max-w-lg mx-auto">
-                    <label class="flex flex-col min-w-40 !h-10 max-w-full">
-                        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
-                            <div class="text-text-muted-light dark:text-text-muted-dark flex border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 items-center justify-center pl-4 rounded-l-lg border-r-0">
-                                <span class="material-symbols-outlined">search</span>
-                            </div>
-                            <input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary h-full placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Buscar en la plataforma..." value=""/>
-                        </div>
-                    </label>
-                </div>
+                
                 <div class="flex justify-end gap-4 items-center">
-                    {# Botón de Notificaciones #}
-                    <button onclick="toggleNotifications('notifications-panel');" 
-                            class="relative flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
                         <span class="material-symbols-outlined text-2xl">notifications</span>
-                        {% if notificaciones|length > 0 %}
-                        <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full animate-pulse"></span>
-                        {% endif %}
                     </button>
                     
                     <a href="{% url 'perfil' %}" class="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -133,11 +98,11 @@
                             <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
                                 <h3 class="text-text-light dark:text-text-dark text-lg font-bold mb-4">Accesos Rápidos</h3>
                                 <div class="flex flex-col gap-2">
-                                    <a class="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 text-text-light dark:text-text-dark transition-colors duration-200" href="{% url 'beneficios' %}">
+                                    <a class="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 text-text-light dark:text-text-dark transition-colors duration-200" href="#">
                                         <span class="material-symbols-outlined text-primary text-2xl">star</span>
                                         <p class="font-medium">Beneficios</p>
                                     </a>
-                                    <a class="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 text-text-light dark:text-text-dark transition-colors duration-200" href="{% url 'directorio' %}">
+                                    <a class="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 text-text-light dark:text-text-dark transition-colors duration-200" href="#">
                                         <span class="material-symbols-outlined text-primary text-2xl">groups</span>
                                         <p class="font-medium">Proveedores</p>
                                     </a>
@@ -162,7 +127,7 @@
                         <div class="space-y-8">
                             <div class="bg-white dark:bg-white rounded-xl shadow-sm p-6">
                                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                                    <h1 class="text-text-light dark:text-text-dark text-2xl font-bold tracking-[-0.015em] shrink-0">Foro (Solo Administradores)</h1>
+                                    <h1 class="text-text-light dark:text-text-dark text-2xl font-bold tracking-[-0.015em] shrink-0">Foro</h1>
                                     
                                     <div class="flex flex-col sm:flex-row gap-4 items-center justify-end w-full sm:w-auto">
                                         
@@ -202,14 +167,11 @@
                                                 </button>
                                             </form>
                                         </div>
-                                        
-                                        {% if is_admin %}
                                         <button onclick="document.getElementById('off-canvas-publicar').classList.add('active');" 
                                                 class="min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-secondary text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] hover:bg-secondary/90 transition-colors duration-200 hidden sm:flex">
                                             <span class="material-symbols-outlined">add</span>
                                             <span class="truncate">Crear publicación</span>
                                         </button>
-                                        {% endif %}
                                     </div>
                                     </div>
                                 
@@ -338,7 +300,7 @@
                                         </div>
                                     {% empty %}
                                         <div class="p-4 text-center text-text-muted-light dark:text-text-muted-dark">
-                                            Aún no hay publicaciones en esta categoría.
+                                            Aún no hay publicaciones en esta categoría. ¡Sé el primero en crear una!
                                         </div>
                                     {% endfor %}
                                 </div>
@@ -349,41 +311,24 @@
                     <aside class="col-span-12 lg:col-span-3 order-3">
                         <div class="space-y-8">
                             <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
-                                <h3 class="text-text-light dark:text-text-dark text-lg font-bold mb-4">Noticias del Rubro</h3>
+                                <h3 class="text-text-light dark:text-text-dark text-lg font-bold mb-4">Últimas Noticias</h3>
                                 <div class="space-y-4">
-                                    {# Bucle de noticias externas: Muestra solo las primeras 4 #}
-                                    {% for news in external_news %}
-                                    <div class="flex gap-4 items-start">
-                                        {# Contenedor de logo que usa la URL de la imagen si existe #}
-                                        <div class="source-logo-container shrink-0" 
-                                             {% if news.image_url %} style='background-image: url("{{ news.image_url }}"); background-size: contain; background-repeat: no-repeat; background-position: center;' {% endif %}
-                                        >
-                                            {% if not news.image_url %}
-                                            <span class="material-symbols-outlined text-3xl text-primary/70">newspaper</span>
-                                            {% endif %}
-                                        </div>
+                                    <div class="flex gap-4 items-center">
+                                        <img class="w-20 h-20 object-cover rounded-lg" data-alt="People in a meeting room" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDw4lC1vSvwceI-qO4vPrManCM4dXbqa79FpaZGZRXJVq3cs4Bm294sTJndABNYnOHpWfm-3QczNaSIYsJMM-M3Ff3teeR5pJR1sOjLSe5f5avdSCCT8z1iIJlf5qhYI7AsJqFbzG1hqj5N5TLX-BV20NBaDUgMSsTIrWIvjVlKe1FFJlnvB-9TVSCGFhfVIdQ3naPfljcnsOR0w13jsFF395orHcaRhHSthWU9M5h6LR1q4BZJgmBfi0hGbpddmYeOW1TAyCU7GQ"/>
                                         <div>
-                                            <p class="text-text-light dark:text-text-dark font-semibold text-sm leading-tight">{{ news.title }}</p>
-                                            <a class="text-primary text-xs font-bold mt-1 inline-block hover:underline" href="{{ news.url }}" target="_blank">
-                                                Leer más ({{ news.source }})
-                                            </a>
+                                            <p class="text-text-light dark:text-text-dark font-semibold text-sm leading-tight">Ayuntamiento lanza nuevas ayudas para el comercio local</p>
+                                            <a class="text-primary text-xs font-bold mt-1 inline-block" href="#">Leer más</a>
                                         </div>
                                     </div>
-                                    {% empty %}
-                                        <p class="text-sm text-text-muted-light">No hay noticias recientes disponibles.</p>
-                                    {% endfor %}
+                                    <div class="flex gap-4 items-center">
+                                        <img class="w-20 h-20 object-cover rounded-lg" data-alt="Person paying with a phone" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSSAxeP4eS2YJLWORYxKZ2D94v4mIbwiqjqgP1xX19yT6dmL2jb-Axv4MosM37ZE99DSfZveQgpm-itm8NYhOXWaxqVrcoxL20U25I-Ll2QVtBmj8U1G_3f1u5HlblZ-FWOO75589irXaVHkF-GXtpEvfg13Hhu3V3vic0_VWgonvuYaPygNJ9boA20hRWkHx7zZQQS8brKPopoAzPB-lbW9ipOv1RcHx_03Yfsa6QFFSl--Br8nVu-r6On8FwpIhFaBbsUikmvw"/>
+                                        <div>
+                                            <p class="text-text-light dark:text-text-dark font-semibold text-sm leading-tight">Tendencias de consumo para el próximo trimestre</p>
+                                            <a class="text-primary text-xs font-bold mt-1 inline-block" href="#">Leer más</a>
+                                        </div>
+                                    </div>
                                 </div>
-                                
-                                {# Botón "Ver Más" #}
-                                {% if external_news|length >= 4 %}
-                                <div class="mt-6 border-t pt-4">
-                                    <a href="{% url 'noticias' %}" class="w-full inline-block text-center px-4 py-2 bg-gray-100 text-primary text-sm font-bold rounded-lg hover:bg-gray-200 transition-colors">
-                                        Ver más noticias
-                                    </a>
-                                </div>
-                                {% endif %}
                             </div>
-                            
                             <div class="bg-white dark:bg-white p-6 rounded-xl shadow-sm">
                                 <h3 class="text-text-light dark:text-text-dark text-lg font-bold mb-4">Próximos Eventos</h3>
                                 <div class="space-y-4">
@@ -418,8 +363,6 @@
         </div>
     </div>
     
-    {# Botón flotante para móvil (Solo Admin) #}
-    {% if is_admin %}
     <div class="fixed bottom-0 left-0 w-full p-4 lg:hidden z-40 bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-gray-700 shadow-lg">
         <button onclick="document.getElementById('off-canvas-publicar').classList.add('active');" 
                 class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-secondary text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] hover:bg-secondary/90 transition-colors duration-200">
@@ -427,11 +370,8 @@
             <span class="truncate">Crear publicación en el Foro</span>
         </button>
     </div>
-    {% endif %}
 
-    {# Modal de Publicación (Solo Admin) #}
-    {% if is_admin %}
-    <div id="off-canvas-publicar" class="off-canvas-panel-post fixed top-0 right-0 w-full sm:w-1/2 lg:w-1/3 h-full bg-white dark:bg-white z-50 shadow-2xl overflow-y-auto p-6 flex flex-col">
+    <div id="off-canvas-publicar" class="off-canvas-panel fixed top-0 right-0 w-full sm:w-1/2 lg:w-1/3 h-full bg-white dark:bg-white z-50 shadow-2xl overflow-y-auto p-6 flex flex-col">
         <div class="flex justify-between items-center pb-4 mb-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-2xl font-bold text-text-light dark:text-text-dark">Crear Nueva Publicación</h3>
             <button onclick="document.getElementById('off-canvas-publicar').classList.remove('active');" 
@@ -462,7 +402,7 @@
             <div>
                 <label for="{{ post_form.contenido.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ post_form.contenido.label }}</label>
                 <textarea name="{{ post_form.contenido.name }}" id="{{ post_form.contenido.id_for_label }}"
-                    placeholder="{{ post_form.contenido.field.widget.attrs.placeholder }}" rows="5"
+                    placeholder="Escribe aquí el contenido de tu publicación..." rows="5"
                     class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark p-[10px] text-base font-normal leading-normal max-h-48 min-h-24">
                 </textarea>
                 {% for error in post_form.contenido.errors %}
@@ -504,46 +444,7 @@
             </div>
         </form>
     </div>
-    {% endif %}
 
-    {# Panel Deslizable de Notificaciones #}
-    <div id="notifications-panel" class="off-canvas-panel-notifications fixed top-0 right-0 w-full sm:w-96 h-full bg-white dark:bg-background-dark z-50 shadow-2xl overflow-y-auto flex flex-col">
-        <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-xl font-bold text-text-light dark:text-text-dark">Notificaciones ({{ notificaciones|length }})</h3>
-            <button onclick="toggleNotifications('notifications-panel')" 
-                    class="text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors">
-                <span class="material-symbols-outlined text-2xl">close</span>
-            </button>
-        </div>
-
-        <div class="flex-grow divide-y divide-gray-100 dark:divide-gray-700">
-            {% for notificacion in notificaciones %}
-            <a href="{{ notificacion.url }}" onclick="toggleNotifications('notifications-panel')" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                <div class="flex items-start gap-3">
-                    <div class="shrink-0 pt-1">
-                        <span class="material-symbols-outlined text-lg {{ notificacion.color }}">{{ notificacion.tipo|first_word_to_icon }}</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-text-light dark:text-text-dark">{{ notificacion.mensaje }}</p>
-                        <p class="text-xs text-text-muted-light mt-1">{{ notificacion.tiempo }} • {{ notificacion.tipo }}</p>
-                    </div>
-                </div>
-            </a>
-            {% empty %}
-            <div class="p-8 text-center text-text-muted-light">
-                <span class="material-symbols-outlined text-4xl mb-2">notifications_off</span>
-                <p>No tienes notificaciones nuevas.</p>
-            </div>
-            {% endfor %}
-        </div>
-
-        <div class="p-4 border-t border-gray-200 dark:border-gray-700 text-center">
-            <button onclick="alert('Se simula marcar todo como leído.')" class="text-primary text-sm font-semibold hover:underline">
-                Marcar todo como leído
-            </button>
-        </div>
-    </div>
-    
 <script>
     function toggleFilter(contentId, iconId) {
         const content = document.getElementById(contentId);
@@ -597,14 +498,6 @@
             }
             
             showMoreBtn.textContent = 'Ver más comentarios';
-        }
-    }
-    
-    // FUNCIÓN NUEVA: Para mostrar/ocultar el panel de notificaciones
-    function toggleNotifications(panelId) {
-        const panel = document.getElementById(panelId);
-        if (panel) {
-            panel.classList.toggle('active');
         }
     }
 </script>

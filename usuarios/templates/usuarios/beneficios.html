@@ -65,11 +65,16 @@
                     </div>
                     <nav class="hidden md:flex gap-6 text-text-muted-light dark:text-text-muted-dark font-semibold text-sm">
                         <a href="{% url 'plataforma_comerciante' %}" class="hover:text-primary transition-colors">Plataforma</a>
+                        <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> 
                         <a href="{% url 'beneficios' %}" class="text-primary transition-colors">Beneficios</a>
+                        <a href="{% url 'comerciantes' %}" class="hover:text-primary transition-colors">Comerciantes</a>
                         <a href="{% url 'perfil' %}" class="hover:text-primary transition-colors">Perfil</a>
                     </nav>
                 </div>
                 <div class="flex justify-end gap-4 items-center">
+                    <button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <span class="material-symbols-outlined text-2xl">notifications</span>
+                    </button>
                     <div class="flex max-w-[480px] items-center justify-center overflow-hidden rounded-lg h-10 w-auto p-2 bg-gray-100 dark:bg-gray-700 text-text-light dark:text-text-dark">
                         <span class="material-symbols-outlined text-xl mr-1 text-secondary">star</span>
                         <span class="text-sm font-semibold">{{ puntos_actuales|default:0 }} Ptos.</span>

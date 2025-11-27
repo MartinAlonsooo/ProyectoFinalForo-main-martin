@@ -48,6 +48,7 @@
                         <a href="{% url 'plataforma_comerciante' %}" class="hover:text-primary transition-colors">Plataforma</a>
                         <a href="{% url 'directorio' %}" class="text-primary transition-colors">Directorio</a>
                         <a href="{% url 'beneficios' %}" class="hover:text-primary transition-colors">Beneficios</a>
+                        <a href="{% url 'comerciantes' %}" class="hover:text-primary transition-colors">Comerciantes</a>
                         <a href="{% url 'perfil' %}" class="hover:text-primary transition-colors">Perfil</a>
                     </nav>
                 </div>
@@ -77,7 +78,7 @@
                             Rubro
                         </option>
                         {% for key, value in RUBROS_CHOICES %}
-                            <option value="{{ value }}" {% if value == current_rubro %}selected{% endif %}>
+                            <option value="{{ key }}" {% if value == current_rubro %}selected{% endif %}>
                                 {{ value }}
                             </option>
                         {% endfor %}

@@ -34,16 +34,6 @@
           },
         }
     </script>
-    <style>
-        /* Panel para notificaciones (NUEVO) */
-        .off-canvas-panel-notifications {
-            transition: transform 0.3s ease-in-out;
-            transform: translateX(100%); 
-        }
-        .off-canvas-panel-notifications.active {
-            transform: translateX(0); 
-        }
-    </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display">
     <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
@@ -57,19 +47,14 @@
                         <a href="{% url 'plataforma_comerciante' %}" class="hover:text-primary transition-colors">Plataforma</a>
                         <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> 
                         <a href="{% url 'beneficios' %}" class="hover:text-primary transition-colors">Beneficios</a>
+                        <a href="{% url 'comerciantes' %}" class="hover:text-primary transition-colors">Comerciantes</a>
                         <a href="{% url 'perfil' %}" class="text-primary transition-colors">Perfil</a>
                     </nav>
                 </div>
                 <div class="flex justify-end gap-4 items-center">
-                    {# Botón de Notificaciones (MODIFICADO) #}
-                    <button onclick="toggleNotifications('notifications-panel-perfil');" 
-                            class="relative flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
                         <span class="material-symbols-outlined text-2xl">notifications</span>
-                        {% if notificaciones|length > 0 %}
-                        <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full animate-pulse"></span>
-                        {% endif %}
                     </button>
-                    
                     <div class="flex items-center gap-2 p-1 rounded-lg bg-gray-100 dark:bg-gray-700">
                         <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" 
                              data-alt="Foto de {{ comerciante.nombre_apellido }}" 
@@ -131,7 +116,7 @@
 
                                     {% if nivel_actual != 'Diamante' %}
                                     <div class="mt-3 text-xs text-text-muted-light">
-                                        Faltan **{{ puntos_restantes }}** puntos para subir al nivel **{{ progreso_porcentaje|add:0 }}**
+                                        Faltan {{ puntos_restantes }} puntos para subir al nivel {{ progreso_porcentaje|add:0 }}
                                     </div>
                                     {% endif %}
                                 </div>
@@ -235,195 +220,10 @@
         </div>
     </div>
     
-    <div id="editPhotoModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
-        <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-md">
-            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4">Cambiar Foto de Perfil</h3>
-            
-            <form method="POST" action="{% url 'perfil' %}" enctype="multipart/form-data">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="edit_photo">
-
-                <div class="flex flex-col items-center mb-6">
-                    <div id="profile-picture-modal-display" class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-24 border-4 border-gray-200" 
-                         style='background-image: url("{{ comerciante.get_profile_picture_url }}");'>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label for="{{ photo_form.foto_perfil.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ photo_form.foto_perfil.label }}</label>
-                    {{ photo_form.foto_perfil }}
-                    <p class="text-xs text-text-muted-light mt-1">Sube una imagen de tu PC.</p>
-                    {% for error in photo_form.foto_perfil.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                    {% endfor %}
-                </div>
-
-                <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('editPhotoModal')" class="px-4 py-2 text-sm font-medium text-text-muted-light bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-
-    <div id="editContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
-        <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-md">
-            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4">Editar Datos Personales</h3>
-            
-            <form method="POST" action="{% url 'perfil' %}">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="edit_contact">
-
-                <div class="space-y-4">
-                    {# Campo Email #}
-                    <div>
-                        <label for="{{ contact_form.email.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ contact_form.email.label }}</label>
-                        {{ contact_form.email }}
-                        {% for error in contact_form.email.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {# Campo WhatsApp #}
-                    <div>
-                        <label for="{{ contact_form.whatsapp.id_for_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ contact_form.whatsapp.label }}</label>
-                        {{ contact_form.whatsapp }}
-                        <p class="text-xs text-text-muted-light mt-1">{{ contact_form.whatsapp.help_text }}</p>
-                        {% for error in contact_form.whatsapp.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('editContactModal')" class="px-4 py-2 text-sm font-medium text-text-muted-light bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-
-    <div id="editBusinessModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
-        <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-md">
-            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4">Editar Datos del Negocio</h3>
-            
-            <form method="POST" action="{% url 'perfil' %}">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="edit_business">
-
-                <div class="space-y-4">
-                    {# Campo Nombre del Negocio #}
-                    <div>
-                        <label for="{{ business_form.nombre_negocio.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ business_form.nombre_negocio.label }}</label>
-                        {{ business_form.nombre_negocio }}
-                        {% for error in business_form.nombre_negocio.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {# Campo Relación Negocio #}
-                    <div>
-                        <label for="{{ business_form.relacion_negocio.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ business_form.relacion_negocio.label }}</label>
-                        {{ business_form.relacion_negocio }}
-                        {% for error in business_form.relacion_negocio.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {# Campo Tipo Negocio #}
-                    <div>
-                        <label for="{{ business_form.tipo_negocio.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ business_form.tipo_negocio.label }}</label>
-                        {{ business_form.tipo_negocio }}
-                        {% for error in business_form.tipo_negocio.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {# Campo Comuna #}
-                    <div>
-                        <label for="{{ business_form.comuna.id_for_label }}" class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">{{ business_form.comuna.label }}</label>
-                        {{ business_form.comuna }}
-                        {% for error in business_form.comuna.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('editBusinessModal')" class="px-4 py-2 text-sm font-medium text-text-muted-light bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-
-    <div id="editInterestsModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">
-        <div class="bg-white dark:bg-background-dark p-8 rounded-xl shadow-2xl w-full max-w-lg">
-            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4">Editar Mis Intereses</h3>
-            
-            <form method="POST" action="{% url 'perfil' %}">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="edit_interests">
-                
-                <p class="text-sm text-text-muted-light mb-4">Selecciona los temas de tu interés para recibir contenido personalizado.</p>
-
-                <div class="space-y-3">
-                    <label class="block text-sm font-medium text-text-light dark:text-text-dark mb-2">{{ interests_form.intereses.label }}</label>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {# Loop a través de los checkboxes de Intereses #}
-                        {% for checkbox in interests_form.intereses %}
-                        <div class="flex items-center">
-                            {{ checkbox.tag }}
-                            <label for="{{ checkbox.id_for_label }}" class="ml-2 text-sm text-text-light dark:text-text-dark cursor-pointer">{{ checkbox.choice_label }}</label>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('editInterestsModal')" class="px-4 py-2 text-sm font-medium text-text-muted-light bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {# Panel Deslizable de Notificaciones (NUEVO) #}
-    <div id="notifications-panel-perfil" class="off-canvas-panel-notifications fixed top-0 right-0 w-full sm:w-96 h-full bg-white dark:bg-background-dark z-50 shadow-2xl overflow-y-auto flex flex-col">
-        <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-xl font-bold text-text-light dark:text-text-dark">Notificaciones ({{ notificaciones|length }})</h3>
-            <button onclick="toggleNotifications('notifications-panel-perfil')" 
-                    class="text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors">
-                <span class="material-symbols-outlined text-2xl">close</span>
-            </button>
-        </div>
-
-        <div class="flex-grow divide-y divide-gray-100 dark:divide-gray-700">
-            {% for notificacion in notificaciones %}
-            <a href="{{ notificacion.url }}" onclick="toggleNotifications('notifications-panel-perfil')" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                <div class="flex items-start gap-3">
-                    <div class="shrink-0 pt-1">
-                        <span class="material-symbols-outlined text-lg {{ notificacion.color }}">{{ notificacion.tipo|first_word_to_icon }}</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-text-light dark:text-text-dark">{{ notificacion.mensaje }}</p>
-                        <p class="text-xs text-text-muted-light mt-1">{{ notificacion.tiempo }} • {{ notificacion.tipo }}</p>
-                    </div>
-                </div>
-            </a>
-            {% empty %}
-            <div class="p-8 text-center text-text-muted-light">
-                <span class="material-symbols-outlined text-4xl mb-2">notifications_off</span>
-                <p>No tienes notificaciones nuevas.</p>
-            </div>
-            {% endfor %}
-        </div>
-
-        <div class="p-4 border-t border-gray-200 dark:border-gray-700 text-center">
-            <button onclick="alert('Se simula marcar todo como leído.')" class="text-primary text-sm font-semibold hover:underline">
-                Marcar todo como leído
-            </button>
-        </div>
-    </div>
+    <div id="editPhotoModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">...</div>
+    <div id="editContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">...</div>
+    <div id="editBusinessModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">...</div>
+    <div id="editInterestsModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden transition-opacity">...</div>
 
 
     <script>
@@ -435,14 +235,6 @@
             document.getElementById(id).classList.add('hidden');
         }
         
-        // FUNCIÓN NUEVA: Para mostrar/ocultar el panel de notificaciones
-        function toggleNotifications(panelId) {
-            const panel = document.getElementById(panelId);
-            if (panel) {
-                panel.classList.toggle('active');
-            }
-        }
-
         // Cierra modales al presionar ESC
         document.addEventListener('keydown', function(event) {
             if (event.key === "Escape") {
@@ -452,26 +244,21 @@
             }
         });
 
-        // Asegurarse de que el input de archivo no rompa la UI
-        const fileInput = document.getElementById('id_foto_perfil');
-        if (fileInput) {
-             fileInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                const fileNameDisplay = document.getElementById('fileNameDisplay');
-                
-                if (fileNameDisplay) {
-                    if (file) {
-                        fileNameDisplay.textContent = file.name;
-                    } else {
-                        fileNameDisplay.textContent = 'Haz clic para subir una foto';
-                    }
-                }
-            });
-        }
+        // Simulación de precarga de foto para modal (opcional)
+        document.getElementById('id_foto_perfil').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileNameDisplay').textContent = file.name;
+            } else {
+                document.getElementById('fileNameDisplay').textContent = 'Haz clic para subir una foto';
+            }
+        });
         
         // FUNCIÓN: Confirma el cierre de sesión antes de redirigir
         function confirmLogout() {
+            // Muestra la ventana de confirmación nativa
             if (window.confirm("¿Estás seguro de que quieres cerrar la sesión?")) {
+                // Si el usuario confirma, redirige al URL de logout de Django
                 window.location.href = "{% url 'logout' %}";
             }
         }
