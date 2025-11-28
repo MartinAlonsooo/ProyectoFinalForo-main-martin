@@ -7,6 +7,7 @@ from django.db import IntegrityError
 from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+import feedparser 
 
 from .models import (
     Comerciante,
@@ -381,6 +382,7 @@ def plataforma_comerciante_view(request):
         if not categoria_filtros or 'TODAS' in categoria_filtros:
             categoria_filtros = ['TODOS']
 
+    news_preview = fetch_news_preview() 
     context = {
         'comerciante': current_logged_in_user,
         'rol_usuario': ROLES.get(current_logged_in_user.rol, 'Usuario'),
@@ -585,31 +587,7 @@ def beneficios_view(request):
 
 # --- Gestión de rol proveedor ---
 
-def solicitar_rol_proveedor_view(request):
-    global current_logged_in_user
 
-    if not current_logged_in_user:
-        messages.warning(
-            request,
-            'Debes iniciar sesión para realizar esta solicitud.'
-        )
-        return redirect('login')
-
-    if request.method == 'POST':
-        if current_logged_in_user.es_proveedor:
-            messages.info(request, 'Ya tienes el rol de proveedor activo.')
-            return redirect('proveedor_dashboard')
-
-        # Aquí podrías solo marcar una solicitud, por ahora activamos directo:
-        current_logged_in_user.es_proveedor = True
-        current_logged_in_user.save(update_fields=['es_proveedor'])
-        messages.success(
-            request,
-            '¡Ahora tienes el rol de Proveedor activo en el sistema!'
-        )
-        return redirect('perfil')
-
-    return redirect('perfil')
 
 
 def proveedor_dashboard_view(request):
@@ -852,3 +830,100 @@ def crear_ticket_soporte(request):
         'comerciante': comerciante,
     }
     return render(request, 'usuarios/soporte/crear_ticket.html', contexto)
+
+# --- DEFINICIÓN GLOBAL DE FUENTES RSS (MÉTODO ROBUSTO: FUENTE ÚNICA Y ESTABLE) ---
+RSS_FEEDS = {
+    'ESTABLE': {
+        'title': 'Noticias Generales de Economía Chilena',
+        'url': 'https://news.google.com/rss/search?q=negocios+chile+pymes&hl=es&gl=CL&ceid=CL:es',
+    }
+}
+
+
+def noticias_view(request):
+    """Implementa el feed RSS con una fuente única estable."""
+    global current_logged_in_user
+
+    if not current_logged_in_user:
+        messages.warning(request, 'Debes iniciar sesión para acceder a las noticias.')
+        return redirect('login') 
+        
+    comerciante = current_logged_in_user
+    
+    noticias = []
+    
+    # Aquí seleccionamos la única fuente disponible y estable: GOOGLE_NEWS
+    source_key = 'ESTABLE'
+    source = RSS_FEEDS[source_key] 
+    
+    feed_title = source['title']
+    feed_url = source['url']
+
+    try:
+        # 2. Parseo del RSS
+        feed = feedparser.parse(feed_url)
+        
+        # 3. Extraer noticias (limitadas a 15 para buen rendimiento)
+        for entry in getattr(feed, 'entries', [])[:15]: 
+            # Usamos try-except interno para manejar entradas corruptas
+            try:
+                fecha_str = entry.get('published', entry.get('updated', 'Fecha no disponible'))
+                
+                noticias.append({
+                    'titulo': entry.title,
+                    'link': entry.link,
+                    'fecha': fecha_str,
+                    'resumen': entry.get('summary', entry.get('description', 'Contenido no disponible')), 
+                    'source_key': source_key # Usamos la clave única para el color
+                })
+            except Exception:
+                continue 
+
+    except Exception:
+        # Si la conexión falla, se retorna una lista vacía.
+        noticias = []
+        feed_title = "Fallo de Conexión"
+    
+    context = {
+        'comerciante': current_logged_in_user,
+        'rol_usuario': ROLES.get('COMERCIANTE', 'Usuario'), 
+        'noticias': noticias,
+        'feed_title': feed_title, 
+    }
+    
+    return render(request, 'usuarios/noticias.html', context)
+
+
+def redes_sociales_view(request):
+    """Restaura la vista que estaba dando AttributeError en urls.py."""
+    global current_logged_in_user
+
+    if not current_logged_in_user:
+        messages.warning(request, 'Por favor, inicia sesión para acceder a esta sección.')
+        return redirect('login')
+
+    context = {
+        'comerciante': current_logged_in_user,
+        'rol_usuario': ROLES.get('COMERCIANTE', 'Usuario'),
+    }
+
+    return render(request, 'usuarios/redes_sociales.html', context)
+
+# --- FUNCIÓN AUXILIAR PARA OBTENER EL PREVIEW DE NOTICIAS ---
+def fetch_news_preview():
+    # Usamos la única fuente estable definida globalmente en RSS_FEEDS
+    try:
+        stable_source = RSS_FEEDS['ESTABLE'] 
+        feed = feedparser.parse(stable_source['url'])
+        preview_news = []
+        
+        # Limita a 3 ítems y limpia tags
+        for entry in getattr(feed, 'entries', [])[:3]: 
+            preview_news.append({
+                'title': strip_tags(entry.title),
+                'link': entry.link
+            })
+        return preview_news
+    except Exception:
+        # En caso de fallo, retorna una lista vacía para que el template use el fallback
+        return []
