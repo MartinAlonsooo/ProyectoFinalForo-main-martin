@@ -270,3 +270,40 @@ class Propuesta(models.Model):
         
     def __str__(self):
         return f"{self.titulo} - {self.proveedor.nombre}"   
+
+
+# --- MODELO DE TICKETS DE SOPORTE ---
+TICKET_CATEGORIES = [
+    ('TECNICO', 'Fallo Técnico/Error'),
+    ('PAGO', 'Consulta de Pago/Facturación'),
+    ('SUGERENCIA', 'Sugerencia de Mejora'),
+    ('OTRO', 'Otro/General'),
+]
+
+class Ticket(models.Model):
+    """Modelo para solicitudes de soporte o tickets."""
+    # Asume que Comerciante y User están definidos
+    comerciante = models.ForeignKey('Comerciante', on_delete=models.CASCADE, verbose_name="Comerciante")
+    titulo = models.CharField(max_length=150, verbose_name="Asunto del Ticket")
+    categoria = models.CharField(max_length=20, choices=TICKET_CATEGORIES, verbose_name="Categoría")
+    comentario = models.TextField(verbose_name="Comentario y Detalles")
+    adjunto = models.FileField(upload_to='tickets/', blank=True, null=True, verbose_name="Foto/Archivo Adjunto")
+    
+    contacto_opcional = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True, 
+        verbose_name="Contacto (Correo o Teléfono)",
+        help_text="Opcional, para respuesta rápida fuera de la plataforma."
+    )
+    
+    estado = models.CharField(max_length=20, default='ABIERTO', choices=[('ABIERTO', 'Abierto'), ('CERRADO', 'Cerrado'), ('EN_PROCESO', 'En Proceso')])
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Ticket de Soporte'
+        verbose_name_plural = 'Tickets de Soporte'
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"Ticket #{self.id}: {self.titulo} ({self.get_categoria_display()})"

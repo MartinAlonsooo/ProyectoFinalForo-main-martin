@@ -63,13 +63,13 @@
                         <img src="{% static 'img/logoClubAlmacen.png' %}" alt="Logo de la Plataforma" class="h-24 w-auto"/>
                     </div>
                     <nav class="hidden md:flex gap-6 text-text-muted-light dark:text-text-muted-dark font-semibold text-sm">
-                        <a href="{% url 'plataforma_comerciante' %}" class="hover:text-primary transition-colors">Plataforma</a>
+                        <a href="{% url 'plataforma_comerciante' %}" class="text-primary transition-colors">Plataforma</a>
                         <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> 
                         <a href="{% url 'beneficios' %}" class="hover:text-primary transition-colors">Beneficios</a>
-                        <a href="{% url 'noticias' %}" class="hover:text-primary transition-colors">Noticias</a>
-                        <a href="{% url 'comerciantes' %}" class="hover:text-primary transition-colors">Comerciantes</a>
-                        <a href="{% url 'redes_sociales' %}" class="text-primary transition-colors">Redes Sociales</a>
-                        <a href="{% url 'perfil' %}" class="hover:text-primary transition-colors">Perfil</a>
+                        <a href="{% url 'redes_sociales' %}" class="hover:text-primary transition-colors">Redes Sociales</a>
+                        <a href="{% url 'soporte' %}" class="hover:text-red-500 transition-colors font-bold text-red-500">
+                        Soporte
+                        </a>
                     </nav>
                 </div>
                 
@@ -77,6 +77,17 @@
                     <button class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
                         <span class="material-symbols-outlined text-2xl">notifications</span>
                     </button>
+                    <a href="{% url 'perfil' %}" class="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" 
+                            data-alt="Foto de {{ comerciante.nombre_apellido }}" 
+                            style='background-image: url("{{ comerciante.get_profile_picture_url }}");'>
+                        </div>
+                        
+                        <div class="flex flex-col text-left hidden sm:block">
+                            <p class="text-text-light dark:text-text-dark text-sm font-semibold leading-none">{{ comerciante.nombre_apellido|truncatewords:2 }}</p>
+                            <p class="text-text-muted-light dark:text-text-muted-dark text-xs leading-none mt-1">{{ rol_usuario }}</p>
+                        </div>
+                    </a>
                     <a href="{% url 'perfil' %}" class="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                         </a>
                 </div>

@@ -4,6 +4,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+
     # AUTH
     path('', views.registro_view, name='registro'),
     path('login/', views.login_view, name='login'), 
@@ -12,6 +13,7 @@ urlpatterns = [
     # PLATFORM/FORUM
     path('plataforma/', views.plataforma_comerciante_view, name='plataforma_comerciante'),
     path('publicar/', views.publicar_post_view, name='crear_publicacion'),
+    path('soporte/', views.soporte_view, name='soporte'),
     
     # PERFIL Y BENEFICIOS
     path('perfil/', views.perfil_view, name='perfil'),
@@ -20,8 +22,6 @@ urlpatterns = [
     # RUTAS PRINCIPALES
     path('noticias/', views.noticias_view, name='noticias'),
     path('redes-sociales/', views.redes_sociales_view, name='redes_sociales'), 
-    path('comerciantes/', views.nuevos_comercios_view, name='comerciantes'), # <--- RUTA FALTANTE AGREGADA
-
     # DIRECTORIO DE PROVEEDORES
     path('directorio/', views.directorio_view, name='directorio'),
     path('directorio/<int:pk>/', views.proveedor_perfil_view, name='proveedor_perfil'),

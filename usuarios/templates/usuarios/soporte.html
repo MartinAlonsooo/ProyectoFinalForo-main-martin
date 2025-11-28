@@ -1,0 +1,179 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Soporte - ClubAlmacen</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#005A9C",
+                "secondary": "#FF9800",
+                "background-light": "#F4F6F8",
+                "background-dark": "#101c22",
+                "text-light": "#333333",
+                "text-dark": "#F4F6F8",
+                "text-muted-light": "#666666",
+                "text-muted-dark": "#a0aec0",
+              },
+              fontFamily: {
+                "display": ["Work Sans", "sans-serif"],
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+    <style>
+        /* CSS para corregir el color amarillo/naranja del navegador en Autocomplete */
+        input:-webkit-autofill,
+        textarea:-webkit-autofill,
+        select:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0px 1000px white inset !important;
+            -webkit-text-fill-color: #333333 !important; 
+            transition: background-color 5000s ease-in-out 0s;
+        }
+        
+        /* Estilo base para campos de formulario */
+        .form-input-styled {
+             /* Aplicado directamente a los inputs en el HTML */
+             @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary placeholder:text-text-muted-light dark:bg-gray-800 dark:border-gray-700 dark:text-white text-base leading-normal;
+        }
+
+        /* Aseguramos que los selects tengan el estilo correcto */
+        select.form-input-styled {
+            @apply appearance-none;
+        }
+
+        /* Ajuste para File Input, que es más complejo de estilizar */
+        .form-file-input-styled {
+            @apply block w-full text-sm text-text-light file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 dark:file:bg-primary dark:file:text-white;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+    <div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+        <div class="layout-container flex h-full grow flex-col">
+            
+            <header class="flex items-center justify-between whitespace-nowrap bg-white dark:bg-background-dark border-b border-gray-200 dark:border-gray-700 px-10 py-3 shadow-sm sticky top-0 z-50">
+                <div class="flex items-center gap-8">
+                    <div class="flex items-center gap-3">
+                        <img src="{% static 'img/logoClubAlmacen.png' %}" alt="Logo de la Plataforma" class="h-24 w-auto"/>
+                    </div>
+                    <nav class="hidden md:flex gap-6 text-text-muted-light dark:text-text-muted-dark font-semibold text-sm">
+                        <a href="{% url 'plataforma_comerciante' %}" class="text-primary transition-colors">Plataforma</a>
+                        <a href="{% url 'directorio' %}" class="hover:text-primary transition-colors">Proveedores</a> 
+                        <a href="{% url 'beneficios' %}" class="hover:text-primary transition-colors">Beneficios</a>
+                        <a href="{% url 'redes_sociales' %}" class="hover:text-primary transition-colors">Redes Sociales</a>
+                        <a href="{% url 'soporte' %}" class="hover:text-red-500 transition-colors font-bold text-red-500">
+                        Soporte
+                        </a>
+                    </nav>
+                    
+                </div>
+                <a href="{% url 'perfil' %}" class="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" 
+                            data-alt="Foto de {{ comerciante.nombre_apellido }}" 
+                            style='background-image: url("{{ comerciante.get_profile_picture_url }}");'>
+                        </div>
+                        
+                        <div class="flex flex-col text-left hidden sm:block">
+                            <p class="text-text-light dark:text-text-dark text-sm font-semibold leading-none">{{ comerciante.nombre_apellido|truncatewords:2 }}</p>
+                            <p class="text-text-muted-light dark:text-text-muted-dark text-xs leading-none mt-1">{{ rol_usuario }}</p>
+                        </div>
+                    </a>
+                </header>
+
+            <main class="flex-1 w-full max-w-screen-md mx-auto p-6 lg:p-8">
+                
+                <h1 class="text-3xl font-bold text-text-light dark:text-text-dark mb-2">Centro de Ayuda y Soporte</h1>
+                <p class="text-text-muted-light dark:text-text-muted-dark text-lg mb-6">
+                    Envía un ticket a nuestro equipo técnico. Por favor, describe tu problema detalladamente.
+                </p>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="p-4 mb-4 text-sm rounded-lg {% if 'success' in message.tags %} bg-green-100 text-green-700 {% elif 'error' in message.tags %} bg-red-100 text-red-700 {% else %} bg-blue-100 text-blue-700 {% endif %}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="bg-white dark:bg-white p-6 rounded-xl shadow-lg border-t-4 border-secondary">
+                    <form method="POST" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="space-y-6">
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                
+                                <div>
+                                    <label for="{{ form.titulo.id_for_label }}" class="block text-sm font-medium text-text-light mb-1">{{ form.titulo.label }}</label>
+                                    <input type="text" name="{{ form.titulo.name }}" id="{{ form.titulo.id_for_label }}" 
+                                           class="form-input-styled h-10" placeholder="Ej: Problema con mi foto de perfil" 
+                                           value="{{ form.titulo.value|default:'' }}">
+                                    {% for error in form.titulo.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.categoria.id_for_label }}" class="block text-sm font-medium text-text-light mb-1">{{ form.categoria.label }}</label>
+                                    <select name="{{ form.categoria.name }}" id="{{ form.categoria.id_for_label }}" class="form-input-styled h-10">
+                                        {% for value, text in form.categoria.field.choices %}
+                                            <option value="{{ value }}" {% if form.categoria.value == value %}selected{% endif %}>{{ text }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% for error in form.categoria.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="{{ form.comentario.id_for_label }}" class="block text-sm font-medium text-text-light mb-1">{{ form.comentario.label }}</label>
+                                <textarea name="{{ form.comentario.name }}" id="{{ form.comentario.id_for_label }}" rows="5"
+                                          class="form-input-styled min-h-[100px]" placeholder="Describe el problema en detalle...">{{ form.comentario.value|default:'' }}</textarea>
+                                {% for error in form.comentario.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
+                            </div>
+
+                            <div>
+                                <label for="{{ form.contacto_opcional.id_for_label }}" class="block text-sm font-medium text-text-light mb-1">{{ form.contacto_opcional.label }} (Opcional)</label>
+                                <input type="text" name="{{ form.contacto_opcional.name }}" id="{{ form.contacto_opcional.id_for_label }}" 
+                                       class="form-input-styled h-10" placeholder="Ej: +569XXXXXXXX o correo@ejemplo.com"
+                                       value="{{ form.contacto_opcional.value|default:'' }}">
+                                <p class="text-xs text-text-muted-light mt-1">{{ form.contacto_opcional.help_text }}</p>
+                                {% for error in form.contacto_opcional.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
+                            </div>
+
+                            <div>
+                                <label for="{{ form.adjunto.id_for_label }}" class="block text-sm font-medium text-text-light mb-1">{{ form.adjunto.label }}</label>
+                                <input type="file" name="{{ form.adjunto.name }}" id="{{ form.adjunto.id_for_label }}" 
+                                       class="form-file-input-styled">
+                                <p class="text-xs text-text-muted-light mt-1">Solo se permite subir un archivo (máx. 10MB). Admite formatos JPG, PNG, PDF, DOCX.</p>
+                                {% for error in form.adjunto.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
+                            </div>
+
+                            {% for error in form.non_field_errors %}
+                                <div class="p-2 bg-red-100 text-red-700 rounded-lg text-sm">{{ error }}</div>
+                            {% endfor %}
+
+                        </div>
+                        
+                        <div class="flex justify-end pt-6">
+                            <button type="submit" 
+                                    class="px-6 py-3 bg-secondary text-white text-base font-bold rounded-lg hover:bg-secondary/90 transition-transform shadow-md hover:shadow-lg">
+                                Enviar Ticket
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+            </main>
+        </div>
+    </div>
+</body>
+</html>

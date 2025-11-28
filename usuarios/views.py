@@ -15,7 +15,7 @@ from django.utils.html import strip_tags
 # Importamos todos los modelos y opciones
 from .models import (
     Comerciante, Post, Like, Comentario, Beneficio, # INTERESTS_CHOICES ELIMINADO
-    NIVELES, CATEGORIAS, Proveedor, Propuesta, RUBROS_CHOICES 
+    NIVELES, CATEGORIAS, Proveedor, Propuesta, RUBROS_CHOICES, Ticket
 ) 
 
 # Importamos todos los formularios necesarios
@@ -26,7 +26,8 @@ from .forms import (
     ProfilePhotoForm,
     BusinessDataForm,
     ContactInfoForm,
-    ComentarioForm 
+    ComentarioForm,
+    TicketForm
 )
 
 # --- SIMULACIÓN DE ESTADO DE SESIÓN GLOBAL ---
@@ -484,11 +485,6 @@ def beneficios_view(request):
     return render(request, 'usuarios/beneficios.html', context)
 
 
-# --- GESTIÓN DE ROLES (ELIMINADA) ---
-# Se eliminan las vistas solicitar_rol_proveedor_view y proveedor_dashboard_view, 
-# ya que el usuario indica que no son necesarias.
-
-
 # --- VISTAS DEL DIRECTORIO (NUEVO) ---
 def directorio_view(request):
     
@@ -587,58 +583,6 @@ def redes_sociales_view(request):
 
     return render(request, 'usuarios/redes_sociales.html', context)
 
-# --- VISTA NUEVOS COMERCIOS (RESTAURADA) ---
-
-def nuevos_comercios_view(request):
-    """Restaura la vista que estaba dando AttributeError en urls.py."""
-    global current_logged_in_user
-
-    if not current_logged_in_user:
-        messages.warning(request, 'Por favor, inicia sesión para acceder a los recursos.')
-        return redirect('login')
-
-    # Asumo categorías del blog para que no falle.
-    BLOG_CATEGORIES_CODES = [('RECURSO', 'Recurso'), ('INNOVACION', 'Innovación')] 
-
-    posts_query = Post.objects.select_related('comerciante').filter(
-        categoria__in=[code for code, _ in BLOG_CATEGORIES_CODES]
-    )
-
-    search_query = request.GET.get('q', '')
-    if search_query:
-        posts_query = posts_query.filter(
-            Q(titulo__icontains=search_query) |
-            Q(contenido__icontains=search_query)
-        )
-
-    category_filter = request.GET.get('category', 'TODOS')
-    if category_filter != 'TODOS':
-        posts_query = posts_query.filter(categoria=category_filter)
-
-    posts_query = posts_query.order_by('-fecha_publicacion')
-
-    socios_destacados = Comerciante.objects.annotate(
-        post_count=Count('posts', filter=Q(posts__categoria__in=[code for code, _ in BLOG_CATEGORIES_CODES]))
-    ).filter(post_count__gt=0).order_by('-post_count')[:3]
-
-    entradas_recientes = Post.objects.filter(
-        categoria__in=[code for code, _ in BLOG_CATEGORIES_CODES]
-    ).order_by('-fecha_publicacion')[:3]
-
-    blog_categories_ui = [{'code': code, 'name': name} for code, name in BLOG_CATEGORIES_CODES]
-
-    context = {
-        'comerciante': current_logged_in_user,
-        'posts': posts_query,
-        'search_query': search_query,
-        'category_filter': category_filter,
-        'blog_categories': blog_categories_ui,
-        'entradas_recientes': entradas_recientes,
-        'socios_destacados': socios_destacados,
-        'post_form': PostForm(),
-        'blog_creation_form': None, # O asume BlogCreationForm() si lo tienes importado
-    }
-    return render(request, 'usuarios/nuevos_comercios_muro.html', context)
 
 
 # --------------------------------------------------
@@ -698,3 +642,32 @@ def noticias_view(request):
     }
     
     return render(request, 'usuarios/noticias.html', context)
+
+@login_required
+def soporte_view(request):
+    global current_logged_in_user
+    
+    if not current_logged_in_user:
+        return redirect('login')
+
+    comerciante = current_logged_in_user
+
+    if request.method == 'POST':
+        form = TicketForm(request.POST, request.FILES)
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.comerciante = comerciante
+            ticket.save()
+            messages.success(request, '¡Ticket de soporte enviado! Te responderemos pronto.')
+            return redirect('soporte')
+        else:
+            messages.error(request, 'Hubo un error al enviar el ticket. Por favor, revisa los campos.')
+    else:
+        form = TicketForm()
+
+    context = {
+        'comerciante': comerciante,
+        'form': form,
+        'rol_usuario': ROLES.get('COMERCIANTE', 'Usuario'),
+    }
+    return render(request, 'usuarios/soporte.html', context)

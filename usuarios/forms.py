@@ -1,10 +1,11 @@
-# usuarios/forms.py (CONTENIDO COMPLETO MODIFICADO)
+# usuarios/forms.py (CONTENIDO COMPLETO CORREGIDO)
 
 from django import forms
 from .models import (
     Comerciante, Post, Comentario, Like, 
     RELACION_NEGOCIO_CHOICES, TIPO_NEGOCIO_CHOICES, 
-    CATEGORIA_POST_CHOICES
+    CATEGORIA_POST_CHOICES, # INTERESTS_CHOICES eliminado aquí
+    Ticket # <--- ¡SOLUCIÓN! Importación del modelo Ticket añadida.
 ) 
 # Opciones de comuna
 COMUNA_CHOICES = [
@@ -181,7 +182,16 @@ class ContactInfoForm(forms.ModelForm):
             'whatsapp': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white', 'placeholder': '+569XXXXXXXX'}),
         }
 
-# InterestsForm ELIMINADO
+class InterestsForm(forms.Form):
+    """Formulario para seleccionar múltiples intereses de la lista definida."""
+    
+    # Nota: Este form aún depende de INTERESTS_CHOICES que puede faltar en models.py
+    intereses = forms.MultipleChoiceField(
+        # choices=INTERESTS_CHOICES, # Comenta o elimina si ya no existen
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Selecciona tus intereses"
+    )
 
 # --- FORMULARIO DE COMENTARIOS RESTAURADO ---
 
@@ -199,4 +209,16 @@ class ComentarioForm(forms.ModelForm):
         }
         labels = {
             'contenido': 'Tu Comentario'
+        }
+
+class TicketForm(forms.ModelForm):
+    class Meta:
+        model = Ticket # <-- Usa el modelo Ticket importado
+        fields = ['titulo', 'categoria', 'comentario', 'adjunto', 'contacto_opcional']
+        widgets = {
+            'titulo': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border rounded', 'placeholder': 'Ej: Problema con mi foto de perfil'}),
+            'categoria': forms.Select(attrs={'class': 'w-full px-3 py-2 border rounded'}),
+            'comentario': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border rounded', 'rows': 5, 'placeholder': 'Describe el problema en detalle...'}),
+            'adjunto': forms.FileInput(attrs={'class': 'w-full'}),
+            'contacto_opcional': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border rounded', 'placeholder': 'Ej: +569XXXXXXXX o correo@ejemplo.com'}),
         }
